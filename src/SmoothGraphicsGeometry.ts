@@ -1,9 +1,7 @@
-import {graphicsUtils, FillStyle, LineStyle} from '@pixi/graphics';
+import {graphicsUtils} from '@pixi/graphics';
 import {SmoothGraphicsData} from './core/SmoothGraphicsData';
 
 const {
-    buildLine,
-    BatchPart,
     BATCH_POOL,
     DRAW_CALL_POOL
 } = graphicsUtils;
@@ -27,6 +25,9 @@ import {Bounds} from '@pixi/display';
 import type {Circle, Ellipse, Polygon, Rectangle, RoundedRectangle, IPointData} from '@pixi/math';
 import {BuildData} from './core/BuildData';
 import {SegmentPacker} from './core/SegmentPacker';
+import {LineStyle} from "./core/LineStyle";
+import {FillStyle} from "./core/FillStyle";
+import {BatchPart} from "./core/BatchPart";
 
 /*
  * Complex shape type
@@ -122,12 +123,12 @@ export class SmoothGraphicsGeometry extends Geometry {
             // number of vertex
             .addAttribute('aVertexJoint', this._buffer, 1, false, TYPES.FLOAT)
             // line width, alignment
-            .addAttribute('aLineStyle', this._buffer, 2, false, TYPES.FLOAT)
+            .addAttribute('aStyleId', this._buffer, 1, false, TYPES.FLOAT)
             // the usual
             .addAttribute('aColor', this._buffer, 4, true, TYPES.UNSIGNED_BYTE)
             .addIndex(this._indexBuffer);
 
-        this.strideFloats = 12;
+        this.strideFloats = 11;
     }
 
     constructor() {
@@ -559,10 +560,6 @@ export class SmoothGraphicsGeometry extends Geometry {
             return false;
         }
 
-        if (!!(styleA as LineStyle).native !== !!(styleB as LineStyle).native) {
-            return false;
-        }
-
         //TODO: propagate width for FillStyle
         if (!!(styleA as LineStyle).width !== !!(styleB as LineStyle).width) {
             return false;
@@ -658,10 +655,6 @@ export class SmoothGraphicsGeometry extends Geometry {
         currentGroup.size = 0;
         currentGroup.type = DRAW_MODES.TRIANGLES;
 
-        let textureCount = 0;
-        let currentTexture = null;
-        let textureId = 0;
-        let native = false;
         let drawMode = DRAW_MODES.TRIANGLES;
 
         let index = 0;
@@ -670,70 +663,40 @@ export class SmoothGraphicsGeometry extends Geometry {
 
         // TODO - this can be simplified
         for (let i = 0; i < this.batches.length; i++) {
-            const data = this.batches[i];
+            const batchData = this.batches[i];
 
             // TODO add some full on MAX_TEXTURE CODE..
             const MAX_TEXTURES = 8;
 
             // Forced cast for checking `native` without errors
-            const style = data.style as LineStyle;
 
-            const nextTexture = style.texture.baseTexture;
+            const batchData = this.batches[i];
+            const {style} = batchData;
 
-            if (native !== !!style.native) {
-                native = !!style.native;
-                drawMode = native ? DRAW_MODES.LINES : DRAW_MODES.TRIANGLES;
-
-                // force the batch to break!
-                currentTexture = null;
-                textureCount = MAX_TEXTURES;
-                TICK++;
+            if (batchData.size === 0) {
+                // I don't know how why do we have size=0 sometimes
+                continue;
             }
 
-            if (currentTexture !== nextTexture) {
-                currentTexture = nextTexture;
-
-                if (nextTexture._batchEnabled !== TICK) {
-                    if (textureCount === MAX_TEXTURES) {
-                        TICK++;
-
-                        textureCount = 0;
-
-                        if (currentGroup.size > 0) {
-                            currentGroup = DRAW_CALL_POOL.pop();
-                            if (!currentGroup) {
-                                currentGroup = new BatchDrawCall();
-                                currentGroup.texArray = new BatchTextureArray();
-                            }
-                            this.drawCalls.push(currentGroup);
-                        }
-
-                        currentGroup.start = index;
-                        currentGroup.size = 0;
-                        currentGroup.texArray.count = 0;
-                        currentGroup.type = drawMode;
-                    }
-
-                    // TODO add this to the render part..
-                    // Hack! Because texture has protected `touched`
-                    nextTexture.touched = 1;// touch;
-
-                    nextTexture._batchEnabled = TICK;
-                    nextTexture._batchLocation = textureCount;
-                    nextTexture.wrapMode = 10497;
-
-                    currentGroup.texArray.elements[currentGroup.texArray.count++] = nextTexture;
-                    textureCount++;
-                }
+            let styleId = -1;
+            const mat = style.getTextureMatrix();
+            if (currentGroup.check(style.shader)) {
+                styleId = currentGroup.add(style.texture, mat);
             }
+            if (styleId < 0) {
+                currentGroup = DRAW_CALL_POOL.pop() || new BatchDrawCall();
+                this.drawCalls.push(currentGroup);
+                currentGroup.begin(shaderSettings, drawMode, style.shader);
+                currentGroup.start = index;
+                styleId = currentGroup.add(style.texture, mat);
+            }
+            currentGroup.size += batchData.size;
+            index += batchData.size;
 
-            currentGroup.size += data.size;
-            index += data.size;
-
-            textureId = nextTexture._batchLocation;
-
-            // this.addColors(colors, style.color, style.alpha, data.attribSize);
-            // this.addTextureIds(textureIds, textureId, data.attribSize);
+            const {color, alpha} = style;
+            const rgb = (color >> 16) + (color & 0xff00) + ((color & 0xff) << 16);
+            batchData.rgba = utils.premultiplyTint(rgb, alpha);
+            batchData.styleId = styleId;
         }
 
         BaseTexture._globalBatch = TICK;

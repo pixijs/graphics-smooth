@@ -3,12 +3,12 @@ import {
     BatchShaderGenerator,
     IBatchFactoryOptions,
     Program, Renderer,
-    Shader,
-    UniformGroup
+    Shader
 } from '@pixi/core';
 import {Matrix} from '@pixi/math';
+import {IGraphicsBatchSettings} from "./core/BatchDrawCall";
 
-const vert = `
+const smoothVert = `precision highp float;
 const float FILL = 1.0;
 const float BEVEL = 4.0;
 const float MITER = 8.0;
@@ -26,26 +26,36 @@ const float CAP_BUTT2 = 4.0;
 
 const float MITER_LIMIT = 10.0;
 
-precision highp float;
+// === geom ===
 attribute vec2 aPrev;
 attribute vec2 aPoint1;
 attribute vec2 aPoint2;
 attribute vec2 aNext;
-attribute vec2 aLineStyle;
 attribute float aVertexJoint;
-attribute vec4 aColor;
 
 uniform mat3 projectionMatrix;
 uniform mat3 translationMatrix;
 uniform vec4 tint;
 
 varying vec4 vSignedCoord;
-varying vec4 vColor;
 varying vec4 vDistance;
 varying float vType;
 
 uniform float resolution;
 uniform float expand;
+
+// === style ===
+attribute float aStyleId;
+attribute vec4 aColor;
+
+varying float vTextureId;
+varying vec4 vColor;
+varying vec2 vTextureCoord;
+
+uniform vec2 styleLine[%MAX_STYLES%];
+uniform vec3 styleMatrix[2 * %MAX_STYLES%];
+uniform float styleTextureId[%MAX_STYLES%];
+uniform vec2 samplerSize[%MAX_TEXTURES%];
 
 vec2 doBisect(vec2 norm, float len, vec2 norm2, float len2,
     float dy, float inner) {
@@ -81,7 +91,11 @@ void main(void){
     float capType = floor(type / 32.0);
     type -= capType * 32.0;
 
-    float lineWidth = aLineStyle.x * 0.5;
+    int styleId = int(aStyleId + 0.5);
+    float lineWidth = styleLine[2.0 * styleId] * 0.5;
+    vTextureId = styleTextureId[styleId];
+    vTextureCoord = vec2(0.0);
+
     vec2 pos;
 
     if (capType == CAP_ROUND) {
@@ -94,6 +108,10 @@ void main(void){
         pos = pointA;
         vDistance = vec4(0.0, -0.5, -0.5, 1.0);
         vType = 0.0;
+
+        vTexturePixel.x = dot(pointA, styleMatrix[styleId * 2]);
+        vTexturePixel.y = dot(pointA, styleMatrix[styleId * 2 + 1]);
+        vTextureCoord = vTexturePixel / samplerSize[int(vTextureId)];
     } else if (type >= FILL_EXPAND && type < FILL_EXPAND + 7.5) {
         // expand vertices
         float flags = type - FILL_EXPAND;
@@ -328,10 +346,12 @@ void main(void){
     vColor = aColor * tint;
 }`;
 
-const frag = `
+const smoothFrag = `
 varying vec4 vColor;
 varying vec4 vDistance;
 varying float vType;
+varying float vTextureId;
+varying vec2 vTextureCoord;
 
 //%forloop% %count%
 
@@ -364,9 +384,79 @@ void main(void){
         alpha = 1.0 - step(vDistance.x, 0.0) * (1.0 - max(right - left, 0.0));
     }
 
-    gl_FragColor = vColor * alpha;
+    vec4 texColor;
+    float textureId = floor(vTextureId+0.5);
+    %FOR_LOOP%
+
+    gl_FragColor = vColor * texColor * alpha;
 }
 `;
+
+export class SmoothGraphicsProgram extends Program {
+    settings: IGraphicsBatchSettings;
+
+    constructor(settings: IGraphicsBatchSettings,
+                vert = smoothVert,
+                frag = smoothFrag, uniforms = {}) {
+        const {maxStyles, maxTextures} = settings;
+        vert = vert.replace(/%MAX_TEXTURES%/gi, '' + maxTextures)
+            .replace(/%MAX_STYLES%/gi, '' + maxStyles);
+        frag = frag.replace(/%MAX_TEXTURES%/gi, '' + maxTextures)
+            .replace(/%FOR_LOOP%/gi, SmoothGraphicsShader.generateSampleSrc(maxTextures));
+
+        super(vert, frag);
+        this.settings = settings;
+    }
+}
+
+export class SmoothGraphicsShader extends Shader {
+    settings: IGraphicsBatchSettings;
+
+    constructor(settings: IGraphicsBatchSettings, prog = new SmoothGraphicsProgram(settings), uniforms = {}) {
+        const {maxStyles, maxTextures} = settings;
+        const sampleValues = new Int32Array(maxTextures);
+        for (let i = 0; i < maxTextures; i++) {
+            sampleValues[i] = i;
+        }
+        super(prog, (Object as any).assign(uniforms, {
+            styleMatrix: new Float32Array(6 * maxStyles),
+            styleTextureId: new Float32Array(maxStyles),
+            samplerSize: new Float32Array(2 * maxTextures),
+            uSamplers: sampleValues,
+            tint: new Float32Array([1, 1, 1, 1]),
+            resolution: 1,
+            expand: 1,
+        }));
+        this.settings = settings;
+    }
+
+    static generateSampleSrc(maxTextures: number): string {
+        let src = '';
+
+        src += '\n';
+        src += '\n';
+
+        for (let i = 0; i < maxTextures; i++) {
+            if (i > 0) {
+                src += '\nelse ';
+            }
+
+            if (i < maxTextures - 1) {
+                src += `if(textureId < ${i}.5)`;
+            }
+
+            src += '\n{';
+            src += `\n\ttexColor = texture2D(uSamplers[${i}], vTextureCoord);`;
+            src += '\n}';
+        }
+
+        src += '\n';
+        src += '\n';
+
+        return src;
+    }
+}
+
 
 export class SmoothShaderGenerator extends BatchShaderGenerator {
     generateShader(maxTextures: number): Shader {
@@ -389,8 +479,8 @@ export class SmoothShaderGenerator extends BatchShaderGenerator {
 export class SmoothRendererFactory {
     static create(options?: IBatchFactoryOptions): typeof AbstractBatchRenderer {
         const {vertex, fragment, vertexSize, geometryClass} = Object.assign({
-            vertex: vert,
-            fragment: frag,
+            vertex: smoothVert,
+            fragment: smoothFrag,
             geometryClass: BatchGeometry,
             vertexSize: 11,
         }, options);
