@@ -30,6 +30,9 @@
     "lint": "eslint ./src",
     "unit-test": "floss --path test --"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist/",
     "lib/",
