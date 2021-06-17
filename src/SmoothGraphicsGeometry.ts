@@ -4,9 +4,7 @@ import {SmoothGraphicsData} from './core/SmoothGraphicsData';
 import {FILL_COMMANDS} from './shapes';
 
 import {
-    BatchTextureArray,
     BaseTexture,
-    Texture,
     Buffer,
     Geometry,
 } from '@pixi/core';
@@ -22,7 +20,7 @@ import {SegmentPacker} from './core/SegmentPacker';
 import {LineStyle} from "./core/LineStyle";
 import {FillStyle} from "./core/FillStyle";
 import {BatchPart} from "./core/BatchPart";
-import {BatchDrawCall, IGraphicsBatchSettings} from "./core/BatchDrawCall";
+import {BatchDrawCall, IGraphicsBatchSettings, matrixEquals} from "./core/BatchDrawCall";
 
 /*
  * Complex shape type
@@ -535,7 +533,10 @@ export class SmoothGraphicsGeometry extends Geometry {
             return false;
         }
 
-        return true;
+        const mat1 = styleA.matrix || Matrix.IDENTITY;
+        const mat2 = styleB.matrix || Matrix.IDENTITY;
+
+        return matrixEquals(mat1, mat2);
     }
 
     /**

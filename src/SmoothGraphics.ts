@@ -19,7 +19,7 @@ import {Container} from '@pixi/display';
 
 import type {IShape, IPointData} from '@pixi/math';
 import type {IDestroyOptions} from '@pixi/display';
-import {BatchDrawCall, IGraphicsBatchSettings} from "./core/BatchDrawCall";
+import {IGraphicsBatchSettings} from "./core/BatchDrawCall";
 import {FillStyle} from "./core/FillStyle";
 import {LineStyle} from "./core/LineStyle";
 import {SmoothGraphicsShader} from "./SmoothShader";
@@ -31,8 +31,8 @@ const temp = new Float32Array(3);
 const DEFAULT_SHADERS: { [key: string]: Shader } = {};
 
 export const defaultShaderSettings: IGraphicsBatchSettings = {
-    maxStyles: 32,
-    maxTextures: 1,
+    maxStyles: 24,
+    maxTextures: 4,
 };
 
 export interface IFillStyleOptions {
@@ -44,14 +44,6 @@ export interface IFillStyleOptions {
 }
 
 export class SmoothGraphics extends Container {
-    /**
-     * Temporary point to use for containsPoint
-     *
-     * @static
-     * @private
-     * @member {PIXI.Point}
-     */
-
     static _TEMP_POINT = new Point();
 
     public shader: Shader;

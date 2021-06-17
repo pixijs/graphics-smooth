@@ -9,7 +9,7 @@ document.body.appendChild(app.view);
 const stage = new PIXI.Container()
 
 // Smooth rectangle
-const graphics = new PIXI.smooth.SmoothGraphics();
+const smoothGraphic = new PIXI.smooth.SmoothGraphics();
 
 smoothGraphic.lineStyle(5, 0, 1);
 smoothGraphic.drawRect(20, 20, 50, 50);
