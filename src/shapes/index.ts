@@ -1,9 +1,9 @@
-import {SHAPES} from '@pixi/math';
-import {IShapeBuilder} from '../core/IShapeBuilder';
-import {CircleBuilder} from './CircleBuilder';
-import {RectangleBuilder} from './RectangleBuilder';
-import {RoundedRectangleBuilder} from './RoundedRectangleBuilder';
-import {PolyBuilder} from './PolyBuilder';
+import { SHAPES } from '@pixi/math';
+import { IShapeBuilder } from '../core/IShapeBuilder';
+import { CircleBuilder } from './CircleBuilder';
+import { RectangleBuilder } from './RectangleBuilder';
+import { RoundedRectangleBuilder } from './RoundedRectangleBuilder';
+import { PolyBuilder } from './PolyBuilder';
 
 export const FILL_COMMANDS: Record<SHAPES, IShapeBuilder> = {
     [SHAPES.POLY]: new PolyBuilder(),
@@ -13,4 +13,4 @@ export const FILL_COMMANDS: Record<SHAPES, IShapeBuilder> = {
     [SHAPES.RREC]: new RoundedRectangleBuilder()
 };
 
-export {CircleBuilder, RectangleBuilder, RoundedRectangleBuilder, PolyBuilder}
+export { CircleBuilder, RectangleBuilder, RoundedRectangleBuilder, PolyBuilder };

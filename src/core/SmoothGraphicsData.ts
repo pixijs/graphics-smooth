@@ -1,8 +1,8 @@
 import type { Matrix, SHAPES, IShape } from '@pixi/math';
-import {LINE_CAP, LINE_JOIN} from '@pixi/graphics';
-import {JOINT_TYPE} from './const';
-import {FillStyle} from "./FillStyle";
-import {LineStyle} from "./LineStyle";
+import { LINE_CAP, LINE_JOIN } from '@pixi/graphics';
+import { JOINT_TYPE } from './const';
+import { FillStyle } from './FillStyle';
+import { LineStyle } from './LineStyle';
 
 /**
  * A class to contain data useful for Graphics objects
@@ -37,7 +37,7 @@ export class SmoothGraphicsData
 
         this.lineStyle = lineStyle;
 
-         this.fillStyle = fillStyle;
+        this.fillStyle = fillStyle;
 
         this.matrix = matrix;
 
@@ -54,12 +54,14 @@ export class SmoothGraphicsData
         this.clearBuild();
     }
 
-    public clearPath() {
+    public clearPath()
+    {
         this.points.length = 0;
         this.closeStroke = true;
     }
 
-    public clearBuild() {
+    public clearBuild()
+    {
         this.triangles.length = 0;
         this.fillStart = 0;
         this.fillLen = 0;
@@ -78,9 +80,12 @@ export class SmoothGraphicsData
         );
     }
 
-    public capType() {
+    public capType()
+    {
         let cap: number;
-        switch (this.lineStyle.cap) {
+
+        switch (this.lineStyle.cap)
+        {
             case LINE_CAP.SQUARE:
                 cap = JOINT_TYPE.CAP_SQUARE;
                 break;
@@ -91,12 +96,16 @@ export class SmoothGraphicsData
                 cap = JOINT_TYPE.CAP_BUTT;
                 break;
         }
+
         return cap;
     }
 
-    public jointType() {
+    public jointType()
+    {
         let joint: number;
-        switch (this.lineStyle.join) {
+
+        switch (this.lineStyle.join)
+        {
             case LINE_JOIN.BEVEL:
                 joint = JOINT_TYPE.JOINT_BEVEL;
                 break;
@@ -107,6 +116,7 @@ export class SmoothGraphicsData
                 joint = JOINT_TYPE.JOINT_MITER;
                 break;
         }
+
         return joint;
     }
 

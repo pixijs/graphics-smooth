@@ -1,8 +1,10 @@
-import {Shader, Texture} from '@pixi/core';
-import type {Matrix} from '@pixi/math';
+import { Shader, Texture } from '@pixi/core';
+import type { Matrix } from '@pixi/math';
 
-export class FillStyle {
-    constructor() {
+export class FillStyle
+{
+    constructor()
+    {
         this.reset();
     }
 
@@ -15,15 +17,18 @@ export class FillStyle {
     visible: boolean;
     smooth: boolean;
 
-    toJSON() {
+    toJSON()
+    {
         return this.copyTo({});
     }
 
-    clone(): FillStyle {
+    clone(): FillStyle
+    {
         return this.copyTo(new FillStyle());
     }
 
-    copyTo(obj: any): any {
+    copyTo(obj: any): any
+    {
         obj.color = this.color;
         obj.alpha = this.alpha;
         obj.texture = this.texture;
@@ -32,10 +37,12 @@ export class FillStyle {
         obj.visible = this.visible;
         obj.smooth = this.smooth;
         obj.matrixTex = null;
+
         return obj;
     }
 
-    reset() {
+    reset()
+    {
         this.color = 0xFFFFFF;
 
         this.alpha = 1;
@@ -53,29 +60,38 @@ export class FillStyle {
         this.matrixTex = null;
     }
 
-    destroy() {
+    destroy()
+    {
         this.texture = null;
         this.matrix = null;
         this.matrixTex = null;
     }
 
-    getTextureMatrix() {
+    getTextureMatrix()
+    {
         const tex = this.texture;
-        if (!this.matrix) {
+
+        if (!this.matrix)
+        {
             return null;
         }
 
         if (tex.frame.width === tex.baseTexture.width
-            && tex.frame.height === tex.baseTexture.height) {
+            && tex.frame.height === tex.baseTexture.height)
+        {
             return this.matrix;
         }
 
-        if (!this.matrixTex) {
+        if (!this.matrixTex)
+        {
             this.matrixTex = this.matrix.clone();
-        } else {
+        }
+        else
+        {
             this.matrixTex.copyFrom(this.matrix);
         }
-        this.matrixTex.translate(+tex.frame.x, +tex.frame.y);
+        this.matrixTex.translate(Number(tex.frame.x), Number(tex.frame.y));
+
         return this.matrixTex;
     }
 }
