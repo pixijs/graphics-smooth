@@ -4,8 +4,8 @@ PixiJS v6 plugin for making very smooth lines
 ### Build & test
 
 ```bash
-pnpm
-pnpm run build
+npm
+npm run build
 http-server -c-1
 ```
 

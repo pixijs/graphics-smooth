@@ -20,11 +20,11 @@
   },
   "scripts": {
     "cleanup": "rimraf dist && mkdirp dist && rimraf lib && mkdirp lib && rimraf compile",
-    "prestart": "pnpm run cleanup",
-    "start": "parallelshell \"pnpm run watch\"",
+    "prestart": "npm run cleanup",
+    "start": "parallelshell \"npm run watch\"",
     "watch": "tsc -w",
     "prebuild": "yarn cleanup",
-    "build": "rollup -c node_modules/@pixi-build-tools/rollup-configurator/index.js && pnpm run build:types",
+    "build": "rollup -c node_modules/@pixi-build-tools/rollup-configurator/index.js && npm run build:types",
     "build:types": "rimraf ./compile && tsc -p ./tsconfig.compile.json && api-extractor run",
     "docs": "typedoc --out ./docs/ --readme README.md ./src/",
     "lint": "eslint ./src",
@@ -57,7 +57,6 @@
     "@pixi/math": "^6.0.4",
     "@pixi/mesh": "^6.0.4",
     "@pixi/utils": "^6.0.4",
-
     "@microsoft/api-extractor": "7.13.5",
     "@pixi-build-tools/rollup-configurator": "~1.0.11",
     "@pixi/eslint-config": "^2.0.1",
