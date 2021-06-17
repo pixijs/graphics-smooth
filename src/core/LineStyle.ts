@@ -24,7 +24,9 @@ export class LineStyle extends FillStyle
         obj.visible = this.visible;
         obj.width = this.width;
         obj.alignment = this.alignment;
-
+        obj.cap = this.cap;
+        obj.join = this.join;
+        obj.miterLimit = this.miterLimit;
         return obj;
     }
 
