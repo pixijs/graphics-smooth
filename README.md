@@ -7,7 +7,7 @@ This is very early version of the plugin.
 
 Here's how it looks, compared to pixi graphics (antialias=false)
 
-![img_1.png](img_1.png)
+![img_1.png](examples/img_1.png)
 
 You can find examples in `examples` folder, you have to start the local webserver in repo folder to view them. 
 
