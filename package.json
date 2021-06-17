@@ -42,7 +42,8 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=14",
+    "npm": ">=7"
   },
   "clean-package": {
     "indent": 2,
