@@ -6,6 +6,7 @@ export class BatchPart
     public style: LineStyle | FillStyle;
     public start: number;
     public size: number;
+    public jointEnd: number;
     public attribStart: number;
     public attribSize: number;
     public styleId: number;
@@ -22,6 +23,7 @@ export class BatchPart
         this.style = style;
         this.start = startIndex;
         this.attribStart = attribStart;
+        this.jointEnd = 0;
     }
 
     public end(endIndex: number, endAttrib: number): void
@@ -39,5 +41,6 @@ export class BatchPart
         this.attribSize = 0;
         this.styleId = -1;
         this.rgba = 0;
+        this.jointEnd = 0;
     }
 }

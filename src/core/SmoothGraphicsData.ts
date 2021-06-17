@@ -24,6 +24,7 @@ export class SmoothGraphicsData
     points: number[];
     triangles: number[];
     // indices in build
+    attribStart: number;
     fillStart: number;
     fillLen: number;
     strokeStart: number;

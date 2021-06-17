@@ -404,7 +404,6 @@ export class SmoothGraphicsGeometry extends Geometry {
                 const indexOld = buildData.indexSize;
 
                 nextTexture.wrapMode = WRAP_MODES.REPEAT;
-
                 if (j === 0) {
                     this.packer.updateBufferSize(data.fillStart, data.fillLen, data.triangles.length, buildData);
                 } else {
@@ -425,6 +424,12 @@ export class SmoothGraphicsGeometry extends Geometry {
                     batchPart.begin(style, indexOld, attribOld);
                     this.batches.push(batchPart);
                     currentStyle = style;
+                }
+
+                if (j === 0) {
+                    batchPart.jointEnd = data.fillStart + data.fillLen;
+                } else {
+                    batchPart.jointEnd = data.strokeStart + data.strokeLen;
                 }
             }
         }
@@ -486,14 +491,14 @@ export class SmoothGraphicsGeometry extends Geometry {
             const data = this.graphicsData[i];
 
             if (data.fillLen) {
-                while (batches[j].attribStart + batches[j].attribSize <= data.fillStart) {
+                while (batches[j].jointEnd <= data.fillStart) {
                     j++;
                 }
                 packer.packInterleavedGeometry(data.fillStart, data.fillLen, data.triangles,
                     batches[j].styleId, batches[j].rgba);
             }
             if (data.strokeLen) {
-                while (batches[j].attribStart + batches[j].attribSize <= data.strokeStart) {
+                while (batches[j].jointEnd <= data.strokeStart) {
                     j++;
                 }
                 packer.packInterleavedGeometry(data.strokeStart, data.strokeLen, data.triangles,
@@ -526,7 +531,7 @@ export class SmoothGraphicsGeometry extends Geometry {
         }
 
         //TODO: propagate width for FillStyle
-        if (!!(styleA as LineStyle).width !== !!(styleB as LineStyle).width) {
+        if ((styleA as LineStyle).width !== (styleB as LineStyle).width) {
             return false;
         }
 
@@ -620,7 +625,7 @@ export class SmoothGraphicsGeometry extends Geometry {
             const batchData = this.batches[i];
             const style = batchData.style as LineStyle;
 
-            if (batchData.size === 0) {
+            if (batchData.attribSize === 0) {
                 // I don't know how why do we have size=0 sometimes
                 continue;
             }

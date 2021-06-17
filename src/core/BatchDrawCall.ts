@@ -119,11 +119,6 @@ export class BatchDrawCall {
         return (this.shader === shader);
     }
 
-    /**
-     * @param texture
-     * @param matrix
-     * @returns -1 if not possible to add
-     */
     add(texture: Texture, matrix: Matrix, lineWidth: number, lineAlignment: number): number {
         const {texArray, TICK, styleArray, settings} = this;
         const {baseTexture} = texture;

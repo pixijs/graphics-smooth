@@ -99,7 +99,7 @@ export class SegmentPacker {
                 bufFloat[bufPos + 7] = y1;
                 bufFloat[bufPos + 8] = 16 * joint;
                 bufFloat[bufPos + 9] = lineStyle;
-                bufFloat[bufPos + 10] = color;
+                bufUint[bufPos + 10] = color;
                 bufPos += strideFloats;
                 continue;
             }
