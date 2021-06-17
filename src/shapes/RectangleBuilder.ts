@@ -1,11 +1,13 @@
-import type {Rectangle} from '@pixi/math';
-import type {IShapeBuilder} from '../core/IShapeBuilder';
-import {SmoothGraphicsData} from '../core/SmoothGraphicsData';
-import {BuildData} from '../core/BuildData';
-import {JOINT_TYPE} from '../core/const';
+import type { Rectangle } from '@pixi/math';
+import type { IShapeBuilder } from '../core/IShapeBuilder';
+import { SmoothGraphicsData } from '../core/SmoothGraphicsData';
+import { BuildData } from '../core/BuildData';
+import { JOINT_TYPE } from '../core/const';
 
-export class RectangleBuilder implements IShapeBuilder {
-    path(graphicsData: SmoothGraphicsData, target: BuildData) {
+export class RectangleBuilder implements IShapeBuilder
+{
+    path(graphicsData: SmoothGraphicsData, _target: BuildData)
+    {
         // --- //
         // need to convert points to a nice regular data
         //
@@ -24,16 +26,18 @@ export class RectangleBuilder implements IShapeBuilder {
             x, y + height);
     }
 
-    line(graphicsData: SmoothGraphicsData, target: BuildData): void {
-        const {verts, joints} = target;
-        const {points} = graphicsData;
+    line(graphicsData: SmoothGraphicsData, target: BuildData): void
+    {
+        const { verts, joints } = target;
+        const { points } = graphicsData;
 
         const joint = graphicsData.jointType();
         const len = points.length;
 
         verts.push(points[len - 2], points[len - 1]);
         joints.push(JOINT_TYPE.NONE);
-        for (let i = 0; i < len; i += 2) {
+        for (let i = 0; i < len; i += 2)
+        {
             verts.push(points[i], points[i + 1]);
             joints.push(joint + 3);
         }
@@ -43,13 +47,12 @@ export class RectangleBuilder implements IShapeBuilder {
         joints.push(JOINT_TYPE.NONE);
     }
 
-    fill(graphicsData: SmoothGraphicsData, target: BuildData): void {
-        const {verts, joints} = target;
-        const {points, triangles} = graphicsData;
+    fill(graphicsData: SmoothGraphicsData, target: BuildData): void
+    {
+        const { verts, joints } = target;
+        const { points, triangles } = graphicsData;
 
         triangles.length = 0;
-
-        const vertPos = verts.length / 2;
 
         verts.push(points[0], points[1],
             points[2], points[3],

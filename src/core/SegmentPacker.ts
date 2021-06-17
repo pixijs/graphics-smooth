@@ -1,41 +1,49 @@
-import {BuildData} from './BuildData';
-import {SmoothGraphicsData} from './SmoothGraphicsData';
-import {JOINT_TYPE} from './const';
+import { BuildData } from './BuildData';
+import { JOINT_TYPE } from './const';
 
-export class SegmentPacker {
+export class SegmentPacker
+{
     static vertsByJoint: Array<number> = [];
 
     strideFloats = 11;
 
-    updateBufferSize(jointStart: number, jointLen: number, triangles: number, target: BuildData) {
-        const {joints} = target;
+    updateBufferSize(jointStart: number, jointLen: number, triangles: number, target: BuildData)
+    {
+        const { joints } = target;
         let foundTriangle = false;
 
         let vertexSize = 0;
         let indexSize = 0;
-        for (let i = jointStart; i < jointStart + jointLen; i++) {
+
+        for (let i = jointStart; i < jointStart + jointLen; i++)
+        {
             const prevCap = joints[i] & ~31;
             const joint = joints[i] & 31;
 
-            if (joint === JOINT_TYPE.FILL) {
+            if (joint === JOINT_TYPE.FILL)
+            {
                 foundTriangle = true;
                 vertexSize++;
                 continue;
             }
 
-            if (joint >= JOINT_TYPE.FILL_EXPAND) {
+            if (joint >= JOINT_TYPE.FILL_EXPAND)
+            {
                 vertexSize += 3;
                 indexSize += 3;
                 continue;
             }
 
             const vs = SegmentPacker.vertsByJoint[joint] + SegmentPacker.vertsByJoint[prevCap];
-            if (vs >= 3) {
+
+            if (vs >= 3)
+            {
                 vertexSize += vs;
                 indexSize += (vs - 2) * 3;
             }
         }
-        if (foundTriangle) {
+        if (foundTriangle)
+        {
             indexSize += triangles;
         }
 
@@ -50,7 +58,8 @@ export class SegmentPacker {
     indices: Uint16Array;
     buildData: BuildData;
 
-    beginPack(buildData: BuildData, bufFloat: Float32Array, bufUint: Uint32Array, indices: Uint16Array, bufferPos: number = 0, indexPos: number = 0) {
+    beginPack(buildData: BuildData, bufFloat: Float32Array, bufUint: Uint32Array, indices: Uint16Array, bufferPos = 0, indexPos = 0)
+    {
         this.buildData = buildData;
         this.bufFloat = bufFloat;
         this.bufUint = bufUint;
@@ -59,7 +68,8 @@ export class SegmentPacker {
         this.indexPos = indexPos;
     }
 
-    endPack() {
+    endPack()
+    {
         this.buildData = null;
         this.bufFloat = null;
         this.bufUint = null;
@@ -67,24 +77,28 @@ export class SegmentPacker {
     }
 
     packInterleavedGeometry(jointStart: number, jointLen: number, triangles: number[],
-                            lineStyle: number, color: number) {
-        const {bufFloat, bufUint, indices, buildData, strideFloats} = this;
-        const {joints, verts} = buildData;
+        lineStyle: number, color: number)
+    {
+        const { bufFloat, bufUint, indices, buildData, strideFloats } = this;
+        const { joints, verts } = buildData;
 
         let bufPos = this.bufferPos;
         let indPos = this.indexPos;
         let index = this.bufferPos / this.strideFloats;
 
-        let x1: number, y1: number, x2: number, y2: number, prevX: number, prevY: number, nextX: number, nextY: number;
-        let type: number;
+        let x1: number; let y1: number; let x2: number; let y2: number; let prevX: number; let prevY: number; let nextX: number; let
+            nextY: number;
+        // let type: number;
         let hasTriangle = false;
 
-        for (let j = jointStart; j < jointStart + jointLen; j++) {
+        for (let j = jointStart; j < jointStart + jointLen; j++)
+        {
             const fullJoint = joints[j];
             const prevCap = joints[j] & ~31;
             const joint = joints[j] & 31;
 
-            if (joint === JOINT_TYPE.FILL) {
+            if (joint === JOINT_TYPE.FILL)
+            {
                 // just one vertex
                 hasTriangle = true;
                 x1 = verts[j * 2];
@@ -104,7 +118,8 @@ export class SegmentPacker {
                 continue;
             }
 
-            if (joint >= JOINT_TYPE.FILL_EXPAND) {
+            if (joint >= JOINT_TYPE.FILL_EXPAND)
+            {
                 prevX = verts[j * 2];
                 prevY = verts[j * 2 + 1];
                 x1 = verts[j * 2 + 2];
@@ -113,7 +128,9 @@ export class SegmentPacker {
                 y2 = verts[j * 2 + 5];
 
                 const bis = j + 3;
-                for (let i = 0; i < 3; i++) {
+
+                for (let i = 0; i < 3; i++)
+                {
                     bufFloat[bufPos] = prevX;
                     bufFloat[bufPos + 1] = prevY;
                     bufFloat[bufPos + 2] = x1;
@@ -137,27 +154,33 @@ export class SegmentPacker {
             }
 
             const vs = SegmentPacker.vertsByJoint[joint] + SegmentPacker.vertsByJoint[prevCap];
-            if (vs === 0) {
+
+            if (vs === 0)
+            {
                 continue;
             }
             x1 = verts[j * 2];
             y1 = verts[j * 2 + 1];
             x2 = verts[j * 2 + 2];
             y2 = verts[j * 2 + 3];
-            //TODO: caps here
+            // TODO: caps here
             prevX = verts[j * 2 - 2];
             prevY = verts[j * 2 - 1];
 
-            if ((joint & ~2) !== JOINT_TYPE.JOINT_CAP_BUTT) {
+            if ((joint & ~2) !== JOINT_TYPE.JOINT_CAP_BUTT)
+            {
                 nextX = verts[j * 2 + 4];
                 nextY = verts[j * 2 + 5];
-            } else {
+            }
+            else
+            {
                 nextX = x1;
                 nextY = y1;
             }
-            type = joint;
+            // type = joint;
 
-            for (let i = 0; i < vs; i++) {
+            for (let i = 0; i < vs; i++)
+            {
                 bufFloat[bufPos] = prevX;
                 bufFloat[bufPos + 1] = prevY;
                 bufFloat[bufPos + 2] = x1;
@@ -179,7 +202,8 @@ export class SegmentPacker {
             indices[indPos + 4] = index + 2;
             indices[indPos + 5] = index + 3;
             indPos += 6;
-            for (let j = 5; j + 1 < vs; j++) {
+            for (let j = 5; j + 1 < vs; j++)
+            {
                 indices[indPos] = index + 4;
                 indices[indPos + 1] = index + j;
                 indices[indPos + 2] = index + j + 1;
@@ -188,8 +212,10 @@ export class SegmentPacker {
             index += vs;
         }
 
-        if (hasTriangle) {
-            for (let i = 0; i < triangles.length; i++) {
+        if (hasTriangle)
+        {
+            for (let i = 0; i < triangles.length; i++)
+            {
                 indices[indPos + i] = triangles[i] + index;
             }
             indPos += triangles.length;
@@ -201,12 +227,14 @@ export class SegmentPacker {
 }
 
 const verts = SegmentPacker.vertsByJoint;
+
 for (let i = 0; i < 256; i++)
-    verts.push(0);
+{ verts.push(0); }
 // simple fill
 verts[JOINT_TYPE.FILL] = 1;
 
-for (let i = 0; i < 8; i++) {
+for (let i = 0; i < 8; i++)
+{
     verts[JOINT_TYPE.FILL_EXPAND + i] = 3;
 }
 

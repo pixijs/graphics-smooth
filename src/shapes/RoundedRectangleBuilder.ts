@@ -1,12 +1,12 @@
-import type {Rectangle} from '@pixi/math';
-import type {IShapeBuilder} from '../core/IShapeBuilder';
-import {SmoothGraphicsData} from '../core/SmoothGraphicsData';
-import {BuildData} from '../core/BuildData';
-import {RoundedRectangle} from '@pixi/math';
+import type { IShapeBuilder } from '../core/IShapeBuilder';
+import { SmoothGraphicsData } from '../core/SmoothGraphicsData';
+import { BuildData } from '../core/BuildData';
+import { RoundedRectangle } from '@pixi/math';
 import { earcut } from '@pixi/utils';
-import {JOINT_TYPE} from '../core/const';
+import { JOINT_TYPE } from '../core/const';
 
-function getPt(n1: number, n2: number, perc: number): number {
+function getPt(n1: number, n2: number, perc: number): number
+{
     const diff = n2 - n1;
 
     return n1 + (diff * perc);
@@ -16,7 +16,8 @@ function quadraticBezierCurve(
     fromX: number, fromY: number,
     cpX: number, cpY: number,
     toX: number, toY: number,
-    out: Array<number> = []): Array<number> {
+    out: Array<number> = []): Array<number>
+{
     const n = 20;
     const points = out;
 
@@ -27,7 +28,8 @@ function quadraticBezierCurve(
     let x = 0;
     let y = 0;
 
-    for (let i = 0, j = 0; i <= n; ++i) {
+    for (let i = 0, j = 0; i <= n; ++i)
+    {
         j = i / n;
 
         // The Green Line
@@ -46,10 +48,12 @@ function quadraticBezierCurve(
     return points;
 }
 
-export class RoundedRectangleBuilder implements IShapeBuilder {
-    path(graphicsData: SmoothGraphicsData, target: BuildData) {
+export class RoundedRectangleBuilder implements IShapeBuilder
+{
+    path(graphicsData: SmoothGraphicsData, _target: BuildData)
+    {
         const rrectData = graphicsData.shape as RoundedRectangle;
-        const {points} = graphicsData;
+        const { points } = graphicsData;
         const x = rrectData.x;
         const y = rrectData.y;
         const width = rrectData.width;
@@ -61,12 +65,15 @@ export class RoundedRectangleBuilder implements IShapeBuilder {
         points.length = 0;
 
         // No radius, do a simple rectangle
-        if (!radius) {
+        if (!radius)
+        {
             points.push(x, y,
                 x + width, y,
                 x + width, y + height,
                 x, y + height);
-        } else {
+        }
+        else
+        {
             quadraticBezierCurve(x, y + radius,
                 x, y,
                 x + radius, y,
@@ -86,16 +93,18 @@ export class RoundedRectangleBuilder implements IShapeBuilder {
         }
     }
 
-    line(graphicsData: SmoothGraphicsData, target: BuildData): void {
-        const {verts, joints} = target;
-        const {points} = graphicsData;
+    line(graphicsData: SmoothGraphicsData, target: BuildData): void
+    {
+        const { verts, joints } = target;
+        const { points } = graphicsData;
 
         const joint = graphicsData.jointType();
         const len = points.length;
 
         verts.push(points[len - 2], points[len - 1]);
         joints.push(JOINT_TYPE.NONE);
-        for (let i = 0; i < len; i += 2) {
+        for (let i = 0; i < len; i += 2)
+        {
             verts.push(points[i], points[i + 1]);
             joints.push(joint + 3);
         }
@@ -103,11 +112,10 @@ export class RoundedRectangleBuilder implements IShapeBuilder {
         joints.push(JOINT_TYPE.NONE);
     }
 
-    fill(graphicsData: SmoothGraphicsData, target: BuildData): void {
-        const {verts, joints} = target;
-        const {points, triangles} = graphicsData;
-
-        const vecPos = verts.length / 2;
+    fill(graphicsData: SmoothGraphicsData, target: BuildData): void
+    {
+        const { verts, joints } = target;
+        const { points } = graphicsData;
 
         graphicsData.triangles = earcut(points, null, 2);
 

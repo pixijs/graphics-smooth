@@ -1,7 +1,6 @@
-import {graphicsUtils} from '@pixi/graphics';
-import {SmoothGraphicsData} from './core/SmoothGraphicsData';
+import { SmoothGraphicsData } from './core/SmoothGraphicsData';
 
-import {FILL_COMMANDS} from './shapes';
+import { FILL_COMMANDS } from './shapes';
 
 import {
     BaseTexture,
@@ -9,18 +8,18 @@ import {
     Geometry,
 } from '@pixi/core';
 
-import {DRAW_MODES, WRAP_MODES, TYPES} from '@pixi/constants';
-import {SHAPES, Point, Matrix} from '@pixi/math';
-import {premultiplyTint} from '@pixi/utils';
-import {Bounds} from '@pixi/display';
+import { WRAP_MODES, TYPES } from '@pixi/constants';
+import { SHAPES, Point, Matrix } from '@pixi/math';
+import { premultiplyTint } from '@pixi/utils';
+import { Bounds } from '@pixi/display';
 
-import type {Circle, Ellipse, Polygon, Rectangle, RoundedRectangle, IPointData} from '@pixi/math';
-import {BuildData} from './core/BuildData';
-import {SegmentPacker} from './core/SegmentPacker';
-import {LineStyle} from "./core/LineStyle";
-import {FillStyle} from "./core/FillStyle";
-import {BatchPart} from "./core/BatchPart";
-import {BatchDrawCall, IGraphicsBatchSettings, matrixEquals} from "./core/BatchDrawCall";
+import type { Circle, Ellipse, Polygon, Rectangle, RoundedRectangle, IPointData } from '@pixi/math';
+import { BuildData } from './core/BuildData';
+import { SegmentPacker } from './core/SegmentPacker';
+import { LineStyle } from './core/LineStyle';
+import { FillStyle } from './core/FillStyle';
+import { BatchPart } from './core/BatchPart';
+import { BatchDrawCall, IGraphicsBatchSettings, matrixEquals } from './core/BatchDrawCall';
 
 /*
  * Complex shape type
@@ -34,7 +33,8 @@ export const DRAW_CALL_POOL: Array<BatchDrawCall> = [];
 const tmpPoint = new Point();
 const tmpBounds = new Bounds();
 
-export class SmoothGraphicsGeometry extends Geometry {
+export class SmoothGraphicsGeometry extends Geometry
+{
     public static BATCHABLE_SIZE = 100;
 
     public boundsPadding: number;
@@ -44,11 +44,13 @@ export class SmoothGraphicsGeometry extends Geometry {
 
     buildData: BuildData;
 
-    get points() {
+    get points()
+    {
         return this.buildData.verts;
     }
 
-    get closePointEps() {
+    get closePointEps()
+    {
         return this.buildData.closePointEps;
     }
 
@@ -74,7 +76,8 @@ export class SmoothGraphicsGeometry extends Geometry {
     _bufferFloats: Float32Array;
     _bufferUint: Uint32Array;
 
-    initAttributes(_static: boolean) {
+    initAttributes(_static: boolean)
+    {
         this._buffer = new Buffer(null, _static, false);
         this._bufferFloats = new Float32Array();
         this._bufferUint = new Uint32Array();
@@ -95,7 +98,8 @@ export class SmoothGraphicsGeometry extends Geometry {
         this.strideFloats = 11;
     }
 
-    constructor() {
+    constructor()
+    {
         super();
 
         this.initAttributes(false);
@@ -135,8 +139,10 @@ export class SmoothGraphicsGeometry extends Geometry {
         this.pack32index = null;
     }
 
-    public checkInstancing(instanced: boolean, allow32Indices: boolean) {
-        if (this.packer) {
+    public checkInstancing(instanced: boolean, allow32Indices: boolean)
+    {
+        if (this.packer)
+        {
             return;
         }
         this.packer = new SegmentPacker();
@@ -149,8 +155,10 @@ export class SmoothGraphicsGeometry extends Geometry {
      * @member {PIXI.Bounds}
      * @readonly
      */
-    public get bounds(): Bounds {
-        if (this.boundsDirty !== this.dirty) {
+    public get bounds(): Bounds
+    {
+        if (this.boundsDirty !== this.dirty)
+        {
             this.boundsDirty = this.dirty;
             this.calculateBounds();
         }
@@ -162,7 +170,8 @@ export class SmoothGraphicsGeometry extends Geometry {
      * Call if you changed graphicsData manually.
      * Empties all batch buffers.
      */
-    protected invalidate(): void {
+    protected invalidate(): void
+    {
         this.boundsDirty = -1;
         this.dirty++;
         this.batchDirty++;
@@ -172,14 +181,16 @@ export class SmoothGraphicsGeometry extends Geometry {
 
         this.buildData.clear();
 
-        for (let i = 0; i < this.drawCalls.length; i++) {
+        for (let i = 0; i < this.drawCalls.length; i++)
+        {
             this.drawCalls[i].texArray.clear();
             DRAW_CALL_POOL.push(this.drawCalls[i]);
         }
 
         this.drawCalls.length = 0;
 
-        for (let i = 0; i < this.batches.length; i++) {
+        for (let i = 0; i < this.batches.length; i++)
+        {
             const batchPart = this.batches[i];
 
             batchPart.reset();
@@ -189,8 +200,10 @@ export class SmoothGraphicsGeometry extends Geometry {
         this.batches.length = 0;
     }
 
-    public clear(): SmoothGraphicsGeometry {
-        if (this.graphicsData.length > 0) {
+    public clear(): SmoothGraphicsGeometry
+    {
+        if (this.graphicsData.length > 0)
+        {
             this.invalidate();
             this.clearDirty++;
             this.graphicsData.length = 0;
@@ -203,7 +216,8 @@ export class SmoothGraphicsGeometry extends Geometry {
         shape: IShape,
         fillStyle: FillStyle = null,
         lineStyle: LineStyle = null,
-        matrix: Matrix = null): SmoothGraphicsGeometry {
+        matrix: Matrix = null): SmoothGraphicsGeometry
+    {
         const data = new SmoothGraphicsData(shape, fillStyle, lineStyle, matrix);
 
         this.graphicsData.push(data);
@@ -212,8 +226,10 @@ export class SmoothGraphicsGeometry extends Geometry {
         return this;
     }
 
-    public drawHole(shape: IShape, matrix: Matrix = null): SmoothGraphicsGeometry {
-        if (!this.graphicsData.length) {
+    public drawHole(shape: IShape, matrix: Matrix = null): SmoothGraphicsGeometry
+    {
+        if (!this.graphicsData.length)
+        {
             return null;
         }
 
@@ -230,11 +246,13 @@ export class SmoothGraphicsGeometry extends Geometry {
         return this;
     }
 
-    public destroy(): void {
+    public destroy(): void
+    {
         super.destroy();
 
         // destroy each of the SmoothGraphicsData objects
-        for (let i = 0; i < this.graphicsData.length; ++i) {
+        for (let i = 0; i < this.graphicsData.length; ++i)
+        {
             this.graphicsData[i].destroy();
         }
 
@@ -257,39 +275,51 @@ export class SmoothGraphicsGeometry extends Geometry {
      * @param {PIXI.IPointData} point - Point to check if it's contained.
      * @return {Boolean} `true` if the point is contained within geometry.
      */
-    public containsPoint(point: IPointData): boolean {
+    public containsPoint(point: IPointData): boolean
+    {
         const graphicsData = this.graphicsData;
 
-        for (let i = 0; i < graphicsData.length; ++i) {
+        for (let i = 0; i < graphicsData.length; ++i)
+        {
             const data = graphicsData[i];
 
-            if (!data.fillStyle.visible) {
+            if (!data.fillStyle.visible)
+            {
                 continue;
             }
 
             // only deal with fills..
-            if (data.shape) {
-                if (data.matrix) {
+            if (data.shape)
+            {
+                if (data.matrix)
+                {
                     data.matrix.applyInverse(point, tmpPoint);
-                } else {
+                }
+                else
+                {
                     tmpPoint.copyFrom(point);
                 }
 
-                if (data.shape.contains(tmpPoint.x, tmpPoint.y)) {
+                if (data.shape.contains(tmpPoint.x, tmpPoint.y))
+                {
                     let hitHole = false;
 
-                    if (data.holes) {
-                        for (let i = 0; i < data.holes.length; i++) {
+                    if (data.holes)
+                    {
+                        for (let i = 0; i < data.holes.length; i++)
+                        {
                             const hole = data.holes[i];
 
-                            if (hole.shape.contains(tmpPoint.x, tmpPoint.y)) {
+                            if (hole.shape.contains(tmpPoint.x, tmpPoint.y))
+                            {
                                 hitHole = true;
                                 break;
                             }
                         }
                     }
 
-                    if (!hitHole) {
+                    if (!hitHole)
+                    {
                         return true;
                     }
                 }
@@ -299,41 +329,51 @@ export class SmoothGraphicsGeometry extends Geometry {
         return false;
     }
 
-    updatePoints(): void {
-
+    updatePoints(): void
+    {
+        // do nothing
     }
 
-    updateBufferSize(): void {
+    updateBufferSize(): void
+    {
         this._buffer.update(new Float32Array());
     }
 
-    updateBuild(): void {
-        const {graphicsData, buildData} = this;
+    updateBuild(): void
+    {
+        const { graphicsData, buildData } = this;
         const len = graphicsData.length;
 
-        for (let i = this.shapeBuildIndex; i < len; i++) {
+        for (let i = this.shapeBuildIndex; i < len; i++)
+        {
             const data = graphicsData[i];
 
             data.strokeStart = 0;
             data.strokeLen = 0;
             data.fillStart = 0;
             data.fillLen = 0;
-            const {fillStyle, lineStyle, holes} = data;
-            if (!fillStyle.visible && !lineStyle.visible) {
+            const { fillStyle, lineStyle, holes } = data;
+
+            if (!fillStyle.visible && !lineStyle.visible)
+            {
                 continue;
             }
 
             const command = FILL_COMMANDS[data.type];
+
             data.clearPath();
 
             command.path(data, buildData);
-            if (data.matrix) {
+            if (data.matrix)
+            {
                 this.transformPoints(data.points, data.matrix);
             }
 
             data.clearBuild();
-            if (fillStyle.visible) {
-                if (holes.length) {
+            if (fillStyle.visible)
+            {
+                if (holes.length)
+                {
                     this.processHoles(holes);
                 }
                 data.fillAA = (data.fillStyle as any).smooth
@@ -345,7 +385,8 @@ export class SmoothGraphicsGeometry extends Geometry {
                 command.fill(data, buildData);
                 data.fillLen = buildData.joints.length - data.fillStart;
             }
-            if (lineStyle.visible) {
+            if (lineStyle.visible)
+            {
                 data.strokeStart = buildData.joints.length;
                 command.line(data, buildData);
                 data.strokeLen = buildData.joints.length - data.strokeStart;
@@ -354,19 +395,22 @@ export class SmoothGraphicsGeometry extends Geometry {
         this.shapeBuildIndex = len;
     }
 
-    updateBatches(shaderSettings?: IGraphicsBatchSettings): void {
-        if (!this.graphicsData.length) {
+    updateBatches(shaderSettings?: IGraphicsBatchSettings): void
+    {
+        if (!this.graphicsData.length)
+        {
             this.batchable = true;
 
             return;
         }
         this.updateBuild();
 
-        if (!this.validateBatching()) {
+        if (!this.validateBatching())
+        {
             return;
         }
 
-        const {buildData, graphicsData, packer} = this;
+        const { buildData, graphicsData } = this;
         const len = graphicsData.length;
 
         this.cacheDirty = this.dirty;
@@ -375,24 +419,28 @@ export class SmoothGraphicsGeometry extends Geometry {
 
         let currentStyle = null;
 
-        if (this.batches.length > 0) {
+        if (this.batches.length > 0)
+        {
             batchPart = this.batches[this.batches.length - 1];
             currentStyle = batchPart.style;
         }
 
-        for (let i = this.shapeBatchIndex; i < len; i++) {
-
+        for (let i = this.shapeBatchIndex; i < len; i++)
+        {
             const data = graphicsData[i];
             const fillStyle = data.fillStyle;
             const lineStyle = data.lineStyle;
 
-            if (data.matrix) {
+            if (data.matrix)
+            {
                 this.transformPoints(data.points, data.matrix);
             }
-            if (!fillStyle.visible && !lineStyle.visible) {
+            if (!fillStyle.visible && !lineStyle.visible)
+            {
                 continue;
             }
-            for (let j = 0; j < 2; j++) {
+            for (let j = 0; j < 2; j++)
+            {
                 const style = (j === 0) ? fillStyle : lineStyle;
 
                 if (!style.visible) continue;
@@ -402,9 +450,12 @@ export class SmoothGraphicsGeometry extends Geometry {
                 const indexOld = buildData.indexSize;
 
                 nextTexture.wrapMode = WRAP_MODES.REPEAT;
-                if (j === 0) {
+                if (j === 0)
+                {
                     this.packer.updateBufferSize(data.fillStart, data.fillLen, data.triangles.length, buildData);
-                } else {
+                }
+                else
+                {
                     this.packer.updateBufferSize(data.strokeStart, data.strokeLen, data.triangles.length, buildData);
                 }
 
@@ -412,32 +463,39 @@ export class SmoothGraphicsGeometry extends Geometry {
 
                 if (attribSize === attribOld) continue;
                 // close batch if style is different
-                if (batchPart && !this._compareStyles(currentStyle, style)) {
+                if (batchPart && !this._compareStyles(currentStyle, style))
+                {
                     batchPart.end(indexOld, attribOld);
                     batchPart = null;
                 }
                 // spawn new batch if its first batch or previous was closed
-                if (!batchPart) {
+                if (!batchPart)
+                {
                     batchPart = BATCH_POOL.pop() || new BatchPart();
                     batchPart.begin(style, indexOld, attribOld);
                     this.batches.push(batchPart);
                     currentStyle = style;
                 }
 
-                if (j === 0) {
+                if (j === 0)
+                {
                     batchPart.jointEnd = data.fillStart + data.fillLen;
-                } else {
+                }
+                else
+                {
                     batchPart.jointEnd = data.strokeStart + data.strokeLen;
                 }
             }
         }
         this.shapeBatchIndex = len;
 
-        if (batchPart) {
+        if (batchPart)
+        {
             batchPart.end(buildData.indexSize, buildData.vertexSize);
         }
 
-        if (this.batches.length === 0) {
+        if (this.batches.length === 0)
+        {
             // there are no visible styles in SmoothGraphicsData
             // its possible that someone wants Graphics just for the bounds
             this.batchable = true;
@@ -448,18 +506,23 @@ export class SmoothGraphicsGeometry extends Geometry {
         // TODO make this a const..
         this.batchable = this.isBatchable();
 
-        if (this.batchable) {
+        if (this.batchable)
+        {
             this.packBatches();
-        } else {
+        }
+        else
+        {
             this.buildDrawCalls(shaderSettings);
             this.updatePack();
         }
     }
 
-    updatePack() {
+    updatePack()
+    {
         const { vertexSize, indexSize } = this.buildData;
 
-        if (this.packSize === vertexSize) {
+        if (this.packSize === vertexSize)
+        {
             return;
         }
 
@@ -468,16 +531,22 @@ export class SmoothGraphicsGeometry extends Geometry {
         const index = this._indexBuffer;
         const floatsSize = vertexSize * strideFloats;
 
-        if (buffer.data.length !== floatsSize) {
+        if (buffer.data.length !== floatsSize)
+        {
             const arrBuf = new ArrayBuffer(floatsSize * 4);
+
             this._bufferFloats = new Float32Array(arrBuf);
             this._bufferUint = new Uint32Array(arrBuf);
             buffer.data = this._bufferFloats;
         }
-        if (index.data.length !== indexSize) {
-            if (vertexSize > 0xffff && this.pack32index) {
+        if (index.data.length !== indexSize)
+        {
+            if (vertexSize > 0xffff && this.pack32index)
+            {
                 index.data = new Uint32Array(indexSize);
-            } else {
+            }
+            else
+            {
                 index.data = new Uint16Array(indexSize);
             }
         }
@@ -485,22 +554,28 @@ export class SmoothGraphicsGeometry extends Geometry {
         packer.beginPack(buildData, this._bufferFloats, this._bufferUint, index.data as Uint16Array);
 
         let j = 0;
-        for (let i=0; i < this.graphicsData.length; i++) {
+
+        for (let i = 0; i < this.graphicsData.length; i++)
+        {
             const data = this.graphicsData[i];
 
-            if (data.fillLen) {
-                while (batches[j].jointEnd <= data.fillStart) {
+            if (data.fillLen)
+            {
+                while (batches[j].jointEnd <= data.fillStart)
+                {
                     j++;
                 }
                 packer.packInterleavedGeometry(data.fillStart, data.fillLen, data.triangles,
                     batches[j].styleId, batches[j].rgba);
             }
-            if (data.strokeLen) {
-                while (batches[j].jointEnd <= data.strokeStart) {
+            if (data.strokeLen)
+            {
+                while (batches[j].jointEnd <= data.strokeStart)
+                {
                     j++;
                 }
                 packer.packInterleavedGeometry(data.strokeStart, data.strokeLen, data.triangles,
-                        batches[j].styleId, batches[j].rgba);
+                    batches[j].styleId, batches[j].rgba);
             }
         }
 
@@ -515,21 +590,26 @@ export class SmoothGraphicsGeometry extends Geometry {
      * @param {PIXI.FillStyle | PIXI.LineStyle} styleA
      * @param {PIXI.FillStyle | PIXI.LineStyle} styleB
      */
-    protected _compareStyles(styleA: FillStyle | LineStyle, styleB: FillStyle | LineStyle): boolean {
-        if (!styleA || !styleB) {
+    protected _compareStyles(styleA: FillStyle | LineStyle, styleB: FillStyle | LineStyle): boolean
+    {
+        if (!styleA || !styleB)
+        {
             return false;
         }
 
-        if (styleA.texture.baseTexture !== styleB.texture.baseTexture) {
+        if (styleA.texture.baseTexture !== styleB.texture.baseTexture)
+        {
             return false;
         }
 
-        if (styleA.color + styleA.alpha !== styleB.color + styleB.alpha) {
+        if (styleA.color + styleA.alpha !== styleB.color + styleB.alpha)
+        {
             return false;
         }
 
-        //TODO: propagate width for FillStyle
-        if ((styleA as LineStyle).width !== (styleB as LineStyle).width) {
+        // TODO: propagate width for FillStyle
+        if ((styleA as LineStyle).width !== (styleB as LineStyle).width)
+        {
             return false;
         }
 
@@ -544,12 +624,15 @@ export class SmoothGraphicsGeometry extends Geometry {
      *
      * @protected
      */
-    protected validateBatching(): boolean {
-        if (this.dirty === this.cacheDirty || !this.graphicsData.length) {
+    protected validateBatching(): boolean
+    {
+        if (this.dirty === this.cacheDirty || !this.graphicsData.length)
+        {
             return false;
         }
 
-        for (let i = 0, l = this.graphicsData.length; i < l; i++) {
+        for (let i = 0, l = this.graphicsData.length; i < l; i++)
+        {
             const data = this.graphicsData[i];
             const fill = data.fillStyle;
             const line = data.lineStyle;
@@ -566,14 +649,17 @@ export class SmoothGraphicsGeometry extends Geometry {
      *
      * @protected
      */
-    protected packBatches(): void {
+    protected packBatches(): void
+    {
         this.batchDirty++;
         const batches = this.batches;
 
-        for (let i = 0, l = batches.length; i < l; i++) {
+        for (let i = 0, l = batches.length; i < l; i++)
+        {
             const batch = batches[i];
 
-            for (let j = 0; j < batch.size; j++) {
+            for (let j = 0; j < batch.size; j++)
+            {
                 const index = batch.start + j;
 
                 this.indicesUint16[index] = this.indicesUint16[index] - batch.attribStart;
@@ -581,7 +667,8 @@ export class SmoothGraphicsGeometry extends Geometry {
         }
     }
 
-    protected isBatchable(): boolean {
+    protected isBatchable(): boolean
+    {
         return false;
 
         // prevent heavy mesh batching
@@ -605,10 +692,12 @@ export class SmoothGraphicsGeometry extends Geometry {
      *
      * @protected
      */
-    protected buildDrawCalls(shaderSettings?: IGraphicsBatchSettings) {
-        let TICK = ++BaseTexture._globalBatch;
+    protected buildDrawCalls(shaderSettings?: IGraphicsBatchSettings)
+    {
+        const TICK = ++BaseTexture._globalBatch;
 
-        for (let i = 0; i < this.drawCalls.length; i++) {
+        for (let i = 0; i < this.drawCalls.length; i++)
+        {
             this.drawCalls[i].texArray.clear();
             DRAW_CALL_POOL.push(this.drawCalls[i]);
         }
@@ -616,27 +705,33 @@ export class SmoothGraphicsGeometry extends Geometry {
         this.drawCalls.length = 0;
 
         let currentGroup = DRAW_CALL_POOL.pop() || new BatchDrawCall();
+
         currentGroup.begin(shaderSettings, null);
 
         let index = 0;
 
         this.drawCalls.push(currentGroup);
 
-        for (let i = 0; i < this.batches.length; i++) {
+        for (let i = 0; i < this.batches.length; i++)
+        {
             const batchData = this.batches[i];
             const style = batchData.style as LineStyle;
 
-            if (batchData.attribSize === 0) {
+            if (batchData.attribSize === 0)
+            {
                 // I don't know how why do we have size=0 sometimes
                 continue;
             }
 
             let styleId = -1;
             const mat = style.getTextureMatrix();
-            if (currentGroup.check(style.shader)) {
+
+            if (currentGroup.check(style.shader))
+            {
                 styleId = currentGroup.add(style.texture, mat, style.width || 0, style.alignment || 0);
             }
-            if (styleId < 0) {
+            if (styleId < 0)
+            {
                 currentGroup = DRAW_CALL_POOL.pop() || new BatchDrawCall();
                 this.drawCalls.push(currentGroup);
                 currentGroup.begin(shaderSettings, style.shader);
@@ -646,8 +741,9 @@ export class SmoothGraphicsGeometry extends Geometry {
             currentGroup.size += batchData.size;
             index += batchData.size;
 
-            const {color, alpha} = style;
+            const { color, alpha } = style;
             const rgb = (color >> 16) + (color & 0xff00) + ((color & 0xff) << 16);
+
             batchData.rgba = premultiplyTint(rgb, alpha);
             batchData.styleId = styleId;
         }
@@ -655,14 +751,17 @@ export class SmoothGraphicsGeometry extends Geometry {
         BaseTexture._globalBatch = TICK;
     }
 
-    protected processHoles(holes: Array<SmoothGraphicsData>): void {
-        for (let i = 0; i < holes.length; i++) {
+    protected processHoles(holes: Array<SmoothGraphicsData>): void
+    {
+        for (let i = 0; i < holes.length; i++)
+        {
             const hole = holes[i];
             const command = FILL_COMMANDS[hole.type];
 
             command.path(hole, this.buildData);
 
-            if (hole.matrix) {
+            if (hole.matrix)
+            {
                 this.transformPoints(hole.points, hole.matrix);
             }
         }
@@ -673,7 +772,8 @@ export class SmoothGraphicsGeometry extends Geometry {
      *
      * @protected
      */
-    protected calculateBounds(): void {
+    protected calculateBounds(): void
+    {
         const bounds = this._bounds;
         const sequenceBounds = tmpBounds;
         let curMatrix = Matrix.IDENTITY;
@@ -681,7 +781,8 @@ export class SmoothGraphicsGeometry extends Geometry {
         this._bounds.clear();
         sequenceBounds.clear();
 
-        for (let i = 0; i < this.graphicsData.length; i++) {
+        for (let i = 0; i < this.graphicsData.length; i++)
+        {
             const data = this.graphicsData[i];
             const shape = data.shape;
             const type = data.type;
@@ -689,42 +790,55 @@ export class SmoothGraphicsGeometry extends Geometry {
             const nextMatrix = data.matrix || Matrix.IDENTITY;
             let lineWidth = 0.0;
 
-            if (lineStyle && lineStyle.visible) {
+            if (lineStyle && lineStyle.visible)
+            {
                 const alignment = lineStyle.alignment;
 
                 lineWidth = lineStyle.width;
 
-                if (type === SHAPES.POLY) {
+                if (type === SHAPES.POLY)
+                {
                     lineWidth = lineWidth * (0.5 + Math.abs(0.5 - alignment));
-                } else {
+                }
+                else
+                {
                     lineWidth = lineWidth * Math.max(0, alignment);
                 }
             }
 
-            if (curMatrix !== nextMatrix) {
-                if (!sequenceBounds.isEmpty()) {
+            if (curMatrix !== nextMatrix)
+            {
+                if (!sequenceBounds.isEmpty())
+                {
                     bounds.addBoundsMatrix(sequenceBounds, curMatrix);
                     sequenceBounds.clear();
                 }
                 curMatrix = nextMatrix;
             }
 
-            if (type === SHAPES.RECT || type === SHAPES.RREC) {
+            if (type === SHAPES.RECT || type === SHAPES.RREC)
+            {
                 const rect = shape as Rectangle | RoundedRectangle;
 
                 sequenceBounds.addFramePad(rect.x, rect.y, rect.x + rect.width, rect.y + rect.height,
                     lineWidth, lineWidth);
-            } else if (type === SHAPES.CIRC) {
+            }
+            else if (type === SHAPES.CIRC)
+            {
                 const circle = shape as Circle;
 
                 sequenceBounds.addFramePad(circle.x, circle.y, circle.x, circle.y,
                     circle.radius + lineWidth, circle.radius + lineWidth);
-            } else if (type === SHAPES.ELIP) {
+            }
+            else if (type === SHAPES.ELIP)
+            {
                 const ellipse = shape as Ellipse;
 
                 sequenceBounds.addFramePad(ellipse.x, ellipse.y, ellipse.x, ellipse.y,
                     ellipse.width + lineWidth, ellipse.height + lineWidth);
-            } else {
+            }
+            else
+            {
                 const poly = shape as Polygon;
                 // adding directly to the bounds
 
@@ -732,7 +846,8 @@ export class SmoothGraphicsGeometry extends Geometry {
             }
         }
 
-        if (!sequenceBounds.isEmpty()) {
+        if (!sequenceBounds.isEmpty())
+        {
             bounds.addBoundsMatrix(sequenceBounds, curMatrix);
         }
 
@@ -746,8 +861,10 @@ export class SmoothGraphicsGeometry extends Geometry {
      * @param {number[]} points - Points to transform
      * @param {PIXI.Matrix} matrix - Transform matrix
      */
-    protected transformPoints(points: Array<number>, matrix: Matrix): void {
-        for (let i = 0; i < points.length / 2; i++) {
+    protected transformPoints(points: Array<number>, matrix: Matrix): void
+    {
+        for (let i = 0; i < points.length / 2; i++)
+        {
             const x = points[(i * 2)];
             const y = points[(i * 2) + 1];
 

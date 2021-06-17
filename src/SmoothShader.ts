@@ -1,9 +1,5 @@
-import {
-    Program,
-    Shader
-} from '@pixi/core';
-import {Matrix} from '@pixi/math';
-import {IGraphicsBatchSettings} from "./core/BatchDrawCall";
+import { Program, Shader } from '@pixi/core';
+import { IGraphicsBatchSettings } from './core/BatchDrawCall';
 
 const smoothVert = `precision highp float;
 const float FILL = 1.0;
@@ -389,16 +385,21 @@ void main(void){
 }
 `;
 
-export class SmoothGraphicsProgram extends Program {
+export class SmoothGraphicsProgram extends Program
+{
     settings: IGraphicsBatchSettings;
 
     constructor(settings: IGraphicsBatchSettings,
-                vert = smoothVert,
-                frag = smoothFrag, uniforms = {}) {
-        const {maxStyles, maxTextures} = settings;
-        vert = vert.replace(/%MAX_TEXTURES%/gi, '' + maxTextures)
-            .replace(/%MAX_STYLES%/gi, '' + maxStyles);
-        frag = frag.replace(/%MAX_TEXTURES%/gi, '' + maxTextures)
+        vert = smoothVert,
+        frag = smoothFrag,
+        _uniforms = {})
+    {
+        const { maxStyles, maxTextures } = settings;
+
+        vert = vert.replace(/%MAX_TEXTURES%/gi, `${maxTextures}`)
+            .replace(/%MAX_STYLES%/gi, `${maxStyles}`);
+        frag = frag.replace(/%MAX_TEXTURES%/gi, `${maxTextures}`)
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
             .replace(/%FOR_LOOP%/gi, SmoothGraphicsShader.generateSampleSrc(maxTextures));
 
         super(vert, frag);
@@ -406,13 +407,17 @@ export class SmoothGraphicsProgram extends Program {
     }
 }
 
-export class SmoothGraphicsShader extends Shader {
+export class SmoothGraphicsShader extends Shader
+{
     settings: IGraphicsBatchSettings;
 
-    constructor(settings: IGraphicsBatchSettings, prog = new SmoothGraphicsProgram(settings), uniforms = {}) {
-        const {maxStyles, maxTextures} = settings;
+    constructor(settings: IGraphicsBatchSettings, prog = new SmoothGraphicsProgram(settings), uniforms = {})
+    {
+        const { maxStyles, maxTextures } = settings;
         const sampleValues = new Int32Array(maxTextures);
-        for (let i = 0; i < maxTextures; i++) {
+
+        for (let i = 0; i < maxTextures; i++)
+        {
             sampleValues[i] = i;
         }
         super(prog, (Object as any).assign(uniforms, {
@@ -428,18 +433,22 @@ export class SmoothGraphicsShader extends Shader {
         this.settings = settings;
     }
 
-    static generateSampleSrc(maxTextures: number): string {
+    static generateSampleSrc(maxTextures: number): string
+    {
         let src = '';
 
         src += '\n';
         src += '\n';
 
-        for (let i = 0; i < maxTextures; i++) {
-            if (i > 0) {
+        for (let i = 0; i < maxTextures; i++)
+        {
+            if (i > 0)
+            {
                 src += '\nelse ';
             }
 
-            if (i < maxTextures - 1) {
+            if (i < maxTextures - 1)
+            {
                 src += `if(textureId < ${i}.5)`;
             }
 

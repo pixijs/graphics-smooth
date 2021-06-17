@@ -1,5 +1,5 @@
-import {LineStyle} from "./LineStyle";
-import {FillStyle} from "./FillStyle";
+import { LineStyle } from './LineStyle';
+import { FillStyle } from './FillStyle';
 
 export class BatchPart
 {

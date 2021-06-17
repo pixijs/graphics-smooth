@@ -1,7 +1,8 @@
-import {LINE_CAP, LINE_JOIN} from '@pixi/graphics';
-import {FillStyle} from './FillStyle';
+import { LINE_CAP, LINE_JOIN } from '@pixi/graphics';
+import { FillStyle } from './FillStyle';
 
-export class LineStyle extends FillStyle {
+export class LineStyle extends FillStyle
+{
     width: number;
     alignment: number;
 
@@ -9,11 +10,13 @@ export class LineStyle extends FillStyle {
     join: LINE_JOIN;
     miterLimit: number;
 
-    clone(): LineStyle {
+    clone(): LineStyle
+    {
         return this.copyTo(new LineStyle());
     }
 
-    copyTo(obj: any) {
+    copyTo(obj: any)
+    {
         obj.color = this.color;
         obj.alpha = this.alpha;
         obj.texture = this.texture;
@@ -21,10 +24,12 @@ export class LineStyle extends FillStyle {
         obj.visible = this.visible;
         obj.width = this.width;
         obj.alignment = this.alignment;
+
         return obj;
     }
 
-    reset() {
+    reset()
+    {
         super.reset();
 
         this.smooth = true;
