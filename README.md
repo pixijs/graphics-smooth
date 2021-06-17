@@ -49,13 +49,11 @@ HHAA doesn't work with texture fill yet.
 
 ## Performance
 
-Currently it uses 11 floats per vertex, when original graphics used only 8. Number of vertices also differ, it might use up to 2x of original.
+Currently graphics geometry uses 11 floats per vertex, when original graphics used only 8. Number of vertices also differ, it might use up to 2x of original.
 
 Uniforms are used to store styles depends on (lineWidth, lineAlignment, texture, matrix).
 
 If style buffer is too big (for now its max 24), one more drawcall will spawn.
-
-In future we'll 
 
 ### What are we working on
 
