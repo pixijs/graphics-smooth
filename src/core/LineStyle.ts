@@ -27,6 +27,7 @@ export class LineStyle extends FillStyle
         obj.cap = this.cap;
         obj.join = this.join;
         obj.miterLimit = this.miterLimit;
+
         return obj;
     }
 
