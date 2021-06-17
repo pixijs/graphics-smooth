@@ -1,5 +1,7 @@
-import {Renderer} from '@pixi/core';
-
+export * from './core/BatchDrawCall';
+export * from './core/BatchPart';
+export * from './core/LineStyle';
+export * from './core/FillStyle';
 export * from './core/BuildData';
 export * from './core/const';
 export * from './core/IShapeBuilder';
@@ -9,8 +11,4 @@ export * from './core/SmoothGraphicsData';
 export * from './shapes';
 export * from './SmoothGraphicsGeometry';
 export * from './SmoothGraphics';
-import {SmoothRendererFactory, SmoothRenderer} from './SmoothShader';
-
-export {SmoothRendererFactory, SmoothRenderer};
-
-Renderer.registerPlugin('smooth', SmoothRenderer);
+export * from './SmoothShader';

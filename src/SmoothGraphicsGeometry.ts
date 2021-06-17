@@ -1,15 +1,9 @@
 import {graphicsUtils} from '@pixi/graphics';
 import {SmoothGraphicsData} from './core/SmoothGraphicsData';
 
-const {
-    BATCH_POOL,
-    DRAW_CALL_POOL
-} = graphicsUtils;
-
 import {FILL_COMMANDS} from './shapes';
 
 import {
-    BatchDrawCall,
     BatchTextureArray,
     BaseTexture,
     Texture,
@@ -28,6 +22,7 @@ import {SegmentPacker} from './core/SegmentPacker';
 import {LineStyle} from "./core/LineStyle";
 import {FillStyle} from "./core/FillStyle";
 import {BatchPart} from "./core/BatchPart";
+import {BatchDrawCall, IGraphicsBatchSettings} from "./core/BatchDrawCall";
 
 /*
  * Complex shape type
@@ -35,40 +30,11 @@ import {BatchPart} from "./core/BatchPart";
  */
 export type IShape = Circle | Ellipse | Polygon | Rectangle | RoundedRectangle;
 
+export const BATCH_POOL: Array<BatchPart> = [];
+export const DRAW_CALL_POOL: Array<BatchDrawCall> = [];
+
 const tmpPoint = new Point();
 const tmpBounds = new Bounds();
-
-export class SmoothBatchPart {
-    public style: LineStyle | FillStyle;
-    public start: number;
-    public size: number;
-    public attribStart: number;
-    public attribSize: number;
-
-    constructor() {
-        this.reset();
-    }
-
-    public begin(style: LineStyle | FillStyle, startIndex: number, attribStart: number): void {
-        this.reset();
-        this.style = style;
-        this.start = startIndex;
-        this.attribStart = attribStart;
-    }
-
-    public end(endIndex: number, endAttrib: number): void {
-        this.attribSize = endAttrib - this.attribStart;
-        this.size = endIndex - this.start;
-    }
-
-    public reset(): void {
-        this.style = null;
-        this.size = 0;
-        this.start = 0;
-        this.attribStart = 0;
-        this.attribSize = 0;
-    }
-}
 
 export class SmoothGraphicsGeometry extends Geometry {
     public static BATCHABLE_SIZE = 100;
@@ -91,7 +57,7 @@ export class SmoothGraphicsGeometry extends Geometry {
     graphicsData: Array<SmoothGraphicsData>;
     drawCalls: Array<BatchDrawCall>;
     batchDirty: number;
-    batches: Array<SmoothBatchPart>;
+    batches: Array<BatchPart>;
     packer: SegmentPacker;
     packSize: number;
     pack32index: boolean;
@@ -390,7 +356,7 @@ export class SmoothGraphicsGeometry extends Geometry {
         this.shapeBuildIndex = len;
     }
 
-    updateBatches(): void {
+    updateBatches(shaderSettings?: IGraphicsBatchSettings): void {
         if (!this.graphicsData.length) {
             this.batchable = true;
 
@@ -407,7 +373,7 @@ export class SmoothGraphicsGeometry extends Geometry {
 
         this.cacheDirty = this.dirty;
 
-        let batchPart: SmoothBatchPart = null;
+        let batchPart: BatchPart = null;
 
         let currentStyle = null;
 
@@ -482,8 +448,8 @@ export class SmoothGraphicsGeometry extends Geometry {
         if (this.batchable) {
             this.packBatches();
         } else {
+            this.buildDrawCalls(shaderSettings);
             this.updatePack();
-            this.buildDrawCalls();
         }
     }
 
@@ -494,7 +460,7 @@ export class SmoothGraphicsGeometry extends Geometry {
             return;
         }
 
-        const { strideFloats, packer, buildData } = this;
+        const { strideFloats, packer, buildData, batches } = this;
         const buffer = this._buffer;
         const index = this._indexBuffer;
         const floatsSize = vertexSize * strideFloats;
@@ -515,24 +481,23 @@ export class SmoothGraphicsGeometry extends Geometry {
 
         packer.beginPack(buildData, this._bufferFloats, this._bufferUint, index.data as Uint16Array);
 
+        let j = 0;
         for (let i=0; i < this.graphicsData.length; i++) {
             const data = this.graphicsData[i];
 
             if (data.fillLen) {
-                const lineStyle = 0;
-                const color = data.fillStyle.color;
-                const rgb = (color >> 16) + (color & 0xff00) + ((color & 0xff) << 16);
-                const rgba = premultiplyTint(rgb, data.fillStyle.alpha);
-
-                packer.packInterleavedGeometry(data.fillStart, data.fillLen, data.triangles, lineStyle, rgba);
+                while (batches[j].attribStart + batches[j].attribSize <= data.fillStart) {
+                    j++;
+                }
+                packer.packInterleavedGeometry(data.fillStart, data.fillLen, data.triangles,
+                    batches[j].styleId, batches[j].rgba);
             }
             if (data.strokeLen) {
-                const lineStyle = data.lineStyle.width;
-                const color = data.lineStyle.color;
-                const rgb = (color >> 16) + (color & 0xff00) + ((color & 0xff) << 16);
-                const rgba = premultiplyTint(rgb, data.lineStyle.alpha);
-
-                packer.packInterleavedGeometry(data.strokeStart, data.strokeLen, data.triangles, lineStyle, rgba);
+                while (batches[j].attribStart + batches[j].attribSize <= data.strokeStart) {
+                    j++;
+                }
+                packer.packInterleavedGeometry(data.strokeStart, data.strokeLen, data.triangles,
+                        batches[j].styleId, batches[j].rgba);
             }
         }
 
@@ -634,7 +599,7 @@ export class SmoothGraphicsGeometry extends Geometry {
      *
      * @protected
      */
-    protected buildDrawCalls(): void {
+    protected buildDrawCalls(shaderSettings?: IGraphicsBatchSettings) {
         let TICK = ++BaseTexture._globalBatch;
 
         for (let i = 0; i < this.drawCalls.length; i++) {
@@ -644,34 +609,16 @@ export class SmoothGraphicsGeometry extends Geometry {
 
         this.drawCalls.length = 0;
 
-        let currentGroup: BatchDrawCall = DRAW_CALL_POOL.pop();
-
-        if (!currentGroup) {
-            currentGroup = new BatchDrawCall();
-            currentGroup.texArray = new BatchTextureArray();
-        }
-        currentGroup.texArray.count = 0;
-        currentGroup.start = 0;
-        currentGroup.size = 0;
-        currentGroup.type = DRAW_MODES.TRIANGLES;
-
-        let drawMode = DRAW_MODES.TRIANGLES;
+        let currentGroup = DRAW_CALL_POOL.pop() || new BatchDrawCall();
+        currentGroup.begin(shaderSettings, null);
 
         let index = 0;
 
         this.drawCalls.push(currentGroup);
 
-        // TODO - this can be simplified
         for (let i = 0; i < this.batches.length; i++) {
             const batchData = this.batches[i];
-
-            // TODO add some full on MAX_TEXTURE CODE..
-            const MAX_TEXTURES = 8;
-
-            // Forced cast for checking `native` without errors
-
-            const batchData = this.batches[i];
-            const {style} = batchData;
+            const style = batchData.style as LineStyle;
 
             if (batchData.size === 0) {
                 // I don't know how why do we have size=0 sometimes
@@ -681,21 +628,21 @@ export class SmoothGraphicsGeometry extends Geometry {
             let styleId = -1;
             const mat = style.getTextureMatrix();
             if (currentGroup.check(style.shader)) {
-                styleId = currentGroup.add(style.texture, mat);
+                styleId = currentGroup.add(style.texture, mat, style.width || 0, style.alignment || 0);
             }
             if (styleId < 0) {
                 currentGroup = DRAW_CALL_POOL.pop() || new BatchDrawCall();
                 this.drawCalls.push(currentGroup);
-                currentGroup.begin(shaderSettings, drawMode, style.shader);
+                currentGroup.begin(shaderSettings, style.shader);
                 currentGroup.start = index;
-                styleId = currentGroup.add(style.texture, mat);
+                styleId = currentGroup.add(style.texture, mat, style.width || 0, style.alignment || 0);
             }
             currentGroup.size += batchData.size;
             index += batchData.size;
 
             const {color, alpha} = style;
             const rgb = (color >> 16) + (color & 0xff00) + ((color & 0xff) << 16);
-            batchData.rgba = utils.premultiplyTint(rgb, alpha);
+            batchData.rgba = premultiplyTint(rgb, alpha);
             batchData.styleId = styleId;
         }
 
@@ -800,119 +747,6 @@ export class SmoothGraphicsGeometry extends Geometry {
 
             points[(i * 2)] = (matrix.a * x) + (matrix.c * y) + matrix.tx;
             points[(i * 2) + 1] = (matrix.b * x) + (matrix.d * y) + matrix.ty;
-        }
-    }
-
-    /**
-     * Add colors.
-     *
-     * @protected
-     * @param {number[]} colors - List of colors to add to
-     * @param {number} color - Color to add
-     * @param {number} alpha - Alpha to use
-     * @param {number} size - Number of colors to add
-     */
-    protected addColors(colors: Array<number>, color: number, alpha: number, size: number): void {
-        // TODO use the premultiply bits Ivan added
-        const rgb = (color >> 16) + (color & 0xff00) + ((color & 0xff) << 16);
-
-        const rgba = premultiplyTint(rgb, alpha);
-
-        while (size-- > 0) {
-            colors.push(rgba);
-        }
-    }
-
-    /**
-     * Add texture id that the shader/fragment wants to use.
-     *
-     * @protected
-     * @param {number[]} textureIds
-     * @param {number} id
-     * @param {number} size
-     */
-    protected addTextureIds(textureIds: Array<number>, id: number, size: number): void {
-        while (size-- > 0) {
-            textureIds.push(id);
-        }
-    }
-
-    /**
-     * Generates the UVs for a shape.
-     *
-     * @protected
-     * @param {number[]} verts - Vertices
-     * @param {number[]} uvs - UVs
-     * @param {PIXI.Texture} texture - Reference to Texture
-     * @param {number} start - Index buffer start index.
-     * @param {number} size - The size/length for index buffer.
-     * @param {PIXI.Matrix} [matrix] - Optional transform for all points.
-     */
-    protected addUvs(
-        verts: Array<number>,
-        uvs: Array<number>,
-        texture: Texture,
-        start: number, size:
-            number, matrix:
-            Matrix = null): void {
-        let index = 0;
-        const uvsStart = uvs.length;
-        const frame = texture.frame;
-
-        while (index < size) {
-            let x = verts[(start + index) * 2];
-            let y = verts[((start + index) * 2) + 1];
-
-            if (matrix) {
-                const nx = (matrix.a * x) + (matrix.c * y) + matrix.tx;
-
-                y = (matrix.b * x) + (matrix.d * y) + matrix.ty;
-                x = nx;
-            }
-
-            index++;
-
-            uvs.push(x / frame.width, y / frame.height);
-        }
-
-        const baseTexture = texture.baseTexture;
-
-        if (frame.width < baseTexture.width
-            || frame.height < baseTexture.height) {
-            this.adjustUvs(uvs, texture, uvsStart, size);
-        }
-    }
-
-    /**
-     * Modify uvs array according to position of texture region
-     * Does not work with rotated or trimmed textures
-     *
-     * @param {number[]} uvs - array
-     * @param {PIXI.Texture} texture - region
-     * @param {number} start - starting index for uvs
-     * @param {number} size - how many points to adjust
-     */
-    protected adjustUvs(uvs: Array<number>, texture: Texture, start: number, size: number): void {
-        const baseTexture = texture.baseTexture;
-        const eps = 1e-6;
-        const finish = start + (size * 2);
-        const frame = texture.frame;
-        const scaleX = frame.width / baseTexture.width;
-        const scaleY = frame.height / baseTexture.height;
-        let offsetX = frame.x / frame.width;
-        let offsetY = frame.y / frame.height;
-        let minX = Math.floor(uvs[start] + eps);
-        let minY = Math.floor(uvs[start + 1] + eps);
-
-        for (let i = start + 2; i < finish; i += 2) {
-            minX = Math.min(minX, Math.floor(uvs[i] + eps));
-            minY = Math.min(minY, Math.floor(uvs[i + 1] + eps));
-        }
-        offsetX -= minX;
-        offsetY -= minY;
-        for (let i = start; i < finish; i += 2) {
-            uvs[i] = (uvs[i] + offsetX) * scaleX;
-            uvs[i + 1] = (uvs[i + 1] + offsetY) * scaleY;
         }
     }
 }

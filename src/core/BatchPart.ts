@@ -1,4 +1,5 @@
-import {FillStyle, LineStyle} from '@pixi/graphics';
+import {LineStyle} from "./LineStyle";
+import {FillStyle} from "./FillStyle";
 
 export class BatchPart
 {

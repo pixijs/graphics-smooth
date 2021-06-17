@@ -10,42 +10,40 @@ import {
     SHAPES,
 } from '@pixi/math';
 
-import { Texture, UniformGroup, State, Renderer, BatchDrawCall, Shader } from '@pixi/core';
-import { graphicsUtils, LINE_JOIN, LINE_CAP, FillStyle, LineStyle,
-    ILineStyleOptions, IFillStyleOptions as IFillStyleOptionsBase, Graphics } from '@pixi/graphics';
-import { hex2rgb } from '@pixi/utils';
-import { SmoothGraphicsGeometry } from './SmoothGraphicsGeometry';
-import { BLEND_MODES } from '@pixi/constants';
-import { Container } from '@pixi/display';
+import {Texture, State, Renderer, Shader} from '@pixi/core';
+import {graphicsUtils, LINE_JOIN, LINE_CAP, ILineStyleOptions, Graphics} from '@pixi/graphics';
+import {hex2rgb} from '@pixi/utils';
+import {SmoothGraphicsGeometry} from './SmoothGraphicsGeometry';
+import {BLEND_MODES, DRAW_MODES} from '@pixi/constants';
+import {Container} from '@pixi/display';
 
-import type { IShape, IPointData } from '@pixi/math';
-import type { IDestroyOptions } from '@pixi/display';
+import type {IShape, IPointData} from '@pixi/math';
+import type {IDestroyOptions} from '@pixi/display';
+import {BatchDrawCall, IGraphicsBatchSettings} from "./core/BatchDrawCall";
+import {FillStyle} from "./core/FillStyle";
+import {LineStyle} from "./core/LineStyle";
+import {SmoothGraphicsShader} from "./SmoothShader";
 
-const { BezierUtils, QuadraticUtils, ArcUtils } = graphicsUtils;
+const {BezierUtils, QuadraticUtils, ArcUtils} = graphicsUtils;
 
 const temp = new Float32Array(3);
 // a default shaders map used by graphics..
-const DEFAULT_SHADERS: {[key: string]: Shader} = {};
+const DEFAULT_SHADERS: { [key: string]: Shader } = {};
 
-export interface IFillStyleOptions extends IFillStyleOptionsBase {
+export const defaultShaderSettings: IGraphicsBatchSettings = {
+    maxStyles: 32,
+    maxTextures: 1,
+};
+
+export interface IFillStyleOptions {
+    color?: number;
+    alpha?: number;
+    texture?: Texture;
+    matrix?: Matrix;
     smooth?: boolean;
 }
 
-FillStyle.prototype.clone = function(this: any) {
-    const obj: any = new FillStyle();
-
-    obj.color = this.color;
-    obj.alpha = this.alpha;
-    obj.texture = this.texture;
-    obj.matrix = this.matrix;
-    obj.visible = this.visible;
-    obj.smooth = this.smooth;
-
-    return obj;
-}
-
-export class SmoothGraphics extends Container
-{
+export class SmoothGraphics extends Container {
     /**
      * Temporary point to use for containsPoint
      *
@@ -75,13 +73,11 @@ export class SmoothGraphics extends Container
     private state: State;
     private _geometry: SmoothGraphicsGeometry;
 
-    public get geometry(): SmoothGraphicsGeometry
-    {
+    public get geometry(): SmoothGraphicsGeometry {
         return this._geometry;
     }
 
-    constructor(geometry: SmoothGraphicsGeometry = null)
-    {
+    constructor(geometry: SmoothGraphicsGeometry = null) {
         super();
 
         this._geometry = geometry || new SmoothGraphicsGeometry();
@@ -118,40 +114,33 @@ export class SmoothGraphics extends Container
         this.blendMode = BLEND_MODES.NORMAL;
     }
 
-    public clone(): SmoothGraphics
-    {
+    public clone(): SmoothGraphics {
         this.finishPoly();
 
         return new SmoothGraphics(this._geometry);
     }
 
-    public set blendMode(value: BLEND_MODES)
-    {
+    public set blendMode(value: BLEND_MODES) {
         this.state.blendMode = value;
     }
 
-    public get blendMode(): BLEND_MODES
-    {
+    public get blendMode(): BLEND_MODES {
         return this.state.blendMode;
     }
 
-    public get tint(): number
-    {
+    public get tint(): number {
         return this._tint;
     }
 
-    public set tint(value: number)
-    {
+    public set tint(value: number) {
         this._tint = value;
     }
 
-    public get fill(): FillStyle
-    {
+    public get fill(): FillStyle {
         return this._fillStyle;
     }
 
-    public get line(): LineStyle
-    {
+    public get line(): LineStyle {
         return this._lineStyle;
     }
 
@@ -160,19 +149,16 @@ export class SmoothGraphics extends Container
     public lineStyle(options?: ILineStyleOptions): this;
 
     public lineStyle(options: ILineStyleOptions | number = null,
-                     color = 0x0, alpha = 1, alignment = 0.5, native = false): this
-    {
+                     color = 0x0, alpha = 1, alignment = 0.5, native = false): this {
         // Support non-object params: (width, color, alpha, alignment, native)
-        if (typeof options === 'number')
-        {
-            options = { width: options, color, alpha, alignment, native } as ILineStyleOptions;
+        if (typeof options === 'number') {
+            options = {width: options, color, alpha, alignment, native} as ILineStyleOptions;
         }
 
         return this.lineTextureStyle(options);
     }
 
-    public lineTextureStyle(options: ILineStyleOptions): this
-    {
+    public lineTextureStyle(options: ILineStyleOptions): this {
         // Apply defaults
         options = Object.assign({
             width: 0,
@@ -187,71 +173,55 @@ export class SmoothGraphics extends Container
             miterLimit: 10,
         }, options);
 
-        if (this.currentPath)
-        {
+        if (this.currentPath) {
             this.startPoly();
         }
 
         const visible = options.width > 0 && options.alpha > 0;
 
-        if (!visible)
-        {
+        if (!visible) {
             this._lineStyle.reset();
-        }
-        else
-        {
-            if (options.matrix)
-            {
+        } else {
+            if (options.matrix) {
                 options.matrix = options.matrix.clone();
                 options.matrix.invert();
             }
 
-            Object.assign(this._lineStyle, { visible }, options);
+            Object.assign(this._lineStyle, {visible}, options);
         }
 
         return this;
     }
 
-    protected startPoly(): void
-    {
-        if (this.currentPath)
-        {
+    protected startPoly(): void {
+        if (this.currentPath) {
             const points = this.currentPath.points;
             const len = this.currentPath.points.length;
 
-            if (len > 2)
-            {
+            if (len > 2) {
                 this.drawShape(this.currentPath);
                 this.currentPath = new Polygon();
                 this.currentPath.closeStroke = false;
                 this.currentPath.points.push(points[len - 2], points[len - 1]);
             }
-        }
-        else
-        {
+        } else {
             this.currentPath = new Polygon();
             this.currentPath.closeStroke = false;
         }
     }
 
-    finishPoly(): void
-    {
-        if (this.currentPath)
-        {
-            if (this.currentPath.points.length > 2)
-            {
+    finishPoly(): void {
+        if (this.currentPath) {
+            if (this.currentPath.points.length > 2) {
                 this.drawShape(this.currentPath);
                 this.currentPath = null;
-            }
-            else
-            {
+            } else {
                 this.currentPath.points.length = 0;
             }
         }
     }
 
-    public moveTo(x: number, y: number): this
-    {
+    public moveTo(x: number, y: number): this {
         this.startPoly();
         this.currentPath.points[0] = x;
         this.currentPath.points[1] = y;
@@ -259,10 +229,8 @@ export class SmoothGraphics extends Container
         return this;
     }
 
-    public lineTo(x: number, y: number): this
-    {
-        if (!this.currentPath)
-        {
+    public lineTo(x: number, y: number): this {
+        if (!this.currentPath) {
             this.moveTo(0, 0);
         }
 
@@ -271,37 +239,29 @@ export class SmoothGraphics extends Container
         const fromX = points[points.length - 2];
         const fromY = points[points.length - 1];
 
-        if (fromX !== x || fromY !== y)
-        {
+        if (fromX !== x || fromY !== y) {
             points.push(x, y);
         }
 
         return this;
     }
 
-    protected _initCurve(x = 0, y = 0): void
-    {
-        if (this.currentPath)
-        {
-            if (this.currentPath.points.length === 0)
-            {
+    protected _initCurve(x = 0, y = 0): void {
+        if (this.currentPath) {
+            if (this.currentPath.points.length === 0) {
                 this.currentPath.points = [x, y];
             }
-        }
-        else
-        {
+        } else {
             this.moveTo(x, y);
         }
     }
 
-    public quadraticCurveTo(cpX: number, cpY: number, toX: number, toY: number): this
-    {
+    public quadraticCurveTo(cpX: number, cpY: number, toX: number, toY: number): this {
         this._initCurve();
 
         const points = this.currentPath.points;
 
-        if (points.length === 0)
-        {
+        if (points.length === 0) {
             this.moveTo(0, 0);
         }
 
@@ -310,8 +270,7 @@ export class SmoothGraphics extends Container
         return this;
     }
 
-    public bezierCurveTo(cpX: number, cpY: number, cpX2: number, cpY2: number, toX: number, toY: number): this
-    {
+    public bezierCurveTo(cpX: number, cpY: number, cpX2: number, cpY2: number, toX: number, toY: number): this {
         this._initCurve();
 
         BezierUtils.curveTo(cpX, cpY, cpX2, cpY2, toX, toY, this.currentPath.points);
@@ -319,17 +278,15 @@ export class SmoothGraphics extends Container
         return this;
     }
 
-    public arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): this
-    {
+    public arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): this {
         this._initCurve(x1, y1);
 
         const points = this.currentPath.points;
 
         const result = ArcUtils.curveTo(x1, y1, x2, y2, radius, points);
 
-        if (result)
-        {
-            const { cx, cy, radius, startAngle, endAngle, anticlockwise } = result;
+        if (result) {
+            const {cx, cy, radius, startAngle, endAngle, anticlockwise} = result;
 
             this.arc(cx, cy, radius, startAngle, endAngle, anticlockwise);
         }
@@ -337,26 +294,20 @@ export class SmoothGraphics extends Container
         return this;
     }
 
-    public arc(cx: number, cy: number, radius: number, startAngle: number, endAngle: number, anticlockwise = false): this
-    {
-        if (startAngle === endAngle)
-        {
+    public arc(cx: number, cy: number, radius: number, startAngle: number, endAngle: number, anticlockwise = false): this {
+        if (startAngle === endAngle) {
             return this;
         }
 
-        if (!anticlockwise && endAngle <= startAngle)
-        {
+        if (!anticlockwise && endAngle <= startAngle) {
             endAngle += PI_2;
-        }
-        else if (anticlockwise && startAngle <= endAngle)
-        {
+        } else if (anticlockwise && startAngle <= endAngle) {
             startAngle += PI_2;
         }
 
         const sweep = endAngle - startAngle;
 
-        if (sweep === 0)
-        {
+        if (sweep === 0) {
             return this;
         }
 
@@ -367,26 +318,20 @@ export class SmoothGraphics extends Container
         // If the currentPath exists, take its points. Otherwise call `moveTo` to start a path.
         let points = this.currentPath ? this.currentPath.points : null;
 
-        if (points)
-        {
+        if (points) {
             // TODO: make a better fix.
 
             // We check how far our start is from the last existing point
             const xDiff = Math.abs(points[points.length - 2] - startX);
             const yDiff = Math.abs(points[points.length - 1] - startY);
 
-            if (xDiff < eps && yDiff < eps)
-            {
+            if (xDiff < eps && yDiff < eps) {
                 // If the point is very close, we don't add it, since this would lead to artifacts
                 // during tessellation due to floating point imprecision.
-            }
-            else
-            {
+            } else {
                 points.push(startX, startY);
             }
-        }
-        else
-        {
+        } else {
             this.moveTo(startX, startY);
             points = this.currentPath.points;
         }
@@ -396,13 +341,11 @@ export class SmoothGraphics extends Container
         return this;
     }
 
-    public beginFill(color = 0, alpha = 1, smooth = false): this
-    {
-        return this.beginTextureFill({ texture: Texture.WHITE, color, alpha, smooth });
+    public beginFill(color = 0, alpha = 1, smooth = false): this {
+        return this.beginTextureFill({texture: Texture.WHITE, color, alpha, smooth});
     }
 
-    beginTextureFill(options?: IFillStyleOptions): this
-    {
+    beginTextureFill(options?: IFillStyleOptions): this {
         // Apply defaults
         options = Object.assign({
             texture: Texture.WHITE,
@@ -412,33 +355,27 @@ export class SmoothGraphics extends Container
             smooth: false,
         }, options) as IFillStyleOptions;
 
-        if (this.currentPath)
-        {
+        if (this.currentPath) {
             this.startPoly();
         }
 
         const visible = options.alpha > 0;
 
-        if (!visible)
-        {
+        if (!visible) {
             this._fillStyle.reset();
-        }
-        else
-        {
-            if (options.matrix)
-            {
+        } else {
+            if (options.matrix) {
                 options.matrix = options.matrix.clone();
                 options.matrix.invert();
             }
 
-            Object.assign(this._fillStyle, { visible }, options);
+            Object.assign(this._fillStyle, {visible}, options);
         }
 
         return this;
     }
 
-    public endFill(): this
-    {
+    public endFill(): this {
         this.finishPoly();
 
         this._fillStyle.reset();
@@ -446,49 +383,38 @@ export class SmoothGraphics extends Container
         return this;
     }
 
-    public drawRect(x: number, y: number, width: number, height: number): this
-    {
+    public drawRect(x: number, y: number, width: number, height: number): this {
         return this.drawShape(new Rectangle(x, y, width, height));
     }
 
-    public drawRoundedRect(x: number, y: number, width: number, height: number, radius: number): this
-    {
+    public drawRoundedRect(x: number, y: number, width: number, height: number, radius: number): this {
         return this.drawShape(new RoundedRectangle(x, y, width, height, radius));
     }
 
-    public drawCircle(x: number, y: number, radius: number): this
-    {
+    public drawCircle(x: number, y: number, radius: number): this {
         return this.drawShape(new Circle(x, y, radius));
     }
 
-    public drawEllipse(x: number, y: number, width: number, height: number): this
-    {
+    public drawEllipse(x: number, y: number, width: number, height: number): this {
         return this.drawShape(new Ellipse(x, y, width, height));
     }
 
     public drawPolygon(...path: Array<number> | Array<Point>): this
     public drawPolygon(path: Array<number> | Array<Point> | Polygon): this
 
-    public drawPolygon(...path: any[]): this
-    {
+    public drawPolygon(...path: any[]): this {
         let points: Array<number> | Array<Point>;
         let closeStroke = true;// !!this._fillStyle;
 
         const poly = path[0] as Polygon;
 
         // check if data has points..
-        if (poly.points)
-        {
+        if (poly.points) {
             closeStroke = poly.closeStroke;
             points = poly.points;
-        }
-        else
-        if (Array.isArray(path[0]))
-        {
+        } else if (Array.isArray(path[0])) {
             points = path[0];
-        }
-        else
-        {
+        } else {
             points = path;
         }
 
@@ -501,27 +427,22 @@ export class SmoothGraphics extends Container
         return this;
     }
 
-    public drawShape(shape: IShape): this
-    {
-        if (!this._holeMode)
-        {
+    public drawShape(shape: IShape): this {
+        if (!this._holeMode) {
             this._geometry.drawShape(
                 shape,
                 this._fillStyle.clone(),
                 this._lineStyle.clone(),
                 this._matrix
             );
-        }
-        else
-        {
+        } else {
             this._geometry.drawHole(shape, this._matrix);
         }
 
         return this;
     }
 
-    public clear(): this
-    {
+    public clear(): this {
         this._geometry.clear();
         this._lineStyle.reset();
         this._fillStyle.reset();
@@ -534,8 +455,7 @@ export class SmoothGraphics extends Container
         return this;
     }
 
-    public isFastRect(): boolean
-    {
+    public isFastRect(): boolean {
         const data = this._geometry.graphicsData;
 
         return data.length === 1
@@ -543,13 +463,11 @@ export class SmoothGraphics extends Container
             && !(data[0].lineStyle.visible && data[0].lineStyle.width);
     }
 
-    protected _renderCanvas(renderer: any): void
-    {
+    protected _renderCanvas(renderer: any): void {
         (Graphics.prototype as any)._renderCanvas.call(this, renderer);
     }
 
-    protected _render(renderer: Renderer): void
-    {
+    protected _render(renderer: Renderer): void {
         this.finishPoly();
 
         const geometry = this._geometry;
@@ -559,19 +477,15 @@ export class SmoothGraphics extends Container
 
         geometry.checkInstancing(renderer.geometry.hasInstance, hasuint32);
 
-        geometry.updateBatches();
+        geometry.updateBatches(defaultShaderSettings);
 
-        if (geometry.batchable)
-        {
-            if (this.batchDirty !== geometry.batchDirty)
-            {
+        if (geometry.batchable) {
+            if (this.batchDirty !== geometry.batchDirty) {
                 this._populateBatches();
             }
 
             this._renderBatched(renderer);
-        }
-        else
-        {
+        } else {
             // no batching...
             renderer.batch.flush();
 
@@ -579,8 +493,7 @@ export class SmoothGraphics extends Container
         }
     }
 
-    protected _populateBatches(): void
-    {
+    protected _populateBatches(): void {
         const geometry = this._geometry;
         const blendMode = this.blendMode;
         const len = geometry.batches.length;
@@ -592,8 +505,7 @@ export class SmoothGraphics extends Container
 
         this.vertexData = new Float32Array(geometry.points);
 
-        for (let i = 0; i < len; i++)
-        {
+        for (let i = 0; i < len; i++) {
             const gI = geometry.batches[i];
             const color = gI.style.color;
             const vertexData = new Float32Array(this.vertexData.buffer,
@@ -617,16 +529,15 @@ export class SmoothGraphics extends Container
                 _tintRGB: color,
                 _texture: gI.style.texture,
                 alpha: gI.style.alpha,
-                worldAlpha: 1 };
+                worldAlpha: 1
+            };
 
             this.batches[i] = batch;
         }
     }
 
-    protected _renderBatched(renderer: Renderer): void
-    {
-        if (!this.batches.length)
-        {
+    protected _renderBatched(renderer: Renderer): void {
+        if (!this.batches.length) {
             return;
         }
 
@@ -635,8 +546,7 @@ export class SmoothGraphics extends Container
         this.calculateVertices();
         this.calculateTints();
 
-        for (let i = 0, l = this.batches.length; i < l; i++)
-        {
+        for (let i = 0, l = this.batches.length; i < l; i++) {
             const batch = this.batches[i];
 
             batch.worldAlpha = this.worldAlpha * batch.alpha;
@@ -645,9 +555,9 @@ export class SmoothGraphics extends Container
         }
     }
 
-    protected _renderDirect(renderer: Renderer): void
-    {
-        const shader = this._resolveDirectShader(renderer);
+    protected _renderDirect(renderer: Renderer): void {
+        let directShader = this._resolveDirectShader(renderer);
+        let shader: Shader = directShader;
 
         const geometry = this._geometry;
         const tint = this.tint;
@@ -688,100 +598,109 @@ export class SmoothGraphics extends Container
         // set state..
         renderer.state.set(this.state);
 
+        shader = null;
         // then render the rest of them...
-        for (let i = 0, l = drawCalls.length; i < l; i++)
-        {
-            this._renderDrawCallDirect(renderer, geometry.drawCalls[i]);
+        for (let i = 0, l = drawCalls.length; i < l; i++) {
+            //TODO: refactor it to another class, that fills uniforms of this shader
+            const drawCall = geometry.drawCalls[i];
+
+            const shaderChange = shader !== drawCall.shader;
+            if (shaderChange) {
+                shader = drawCall.shader;
+                if (shader) {
+                    shader.uniforms.translationMatrix = this.transform.worldTransform;
+                    if (shader.uniforms.tint) {
+                        shader.uniforms.tint[0] = uniforms.tint[0];
+                        shader.uniforms.tint[1] = uniforms.tint[1];
+                        shader.uniforms.tint[2] = uniforms.tint[2];
+                        shader.uniforms.tint[3] = uniforms.tint[3];
+                    }
+                }
+            }
+
+            const {texArray, styleArray, size, start} = drawCall;
+            const groupTextureCount = texArray.count;
+            const shaderHere = shader || directShader;
+
+            const texs = shaderHere.uniforms.styleTextureId,
+                mats = shaderHere.uniforms.styleMatrix,
+                lines = shaderHere.uniforms.styleLine;
+            for (let i = 0; i < styleArray.count; i++) {
+                texs[i] = styleArray.textureIds[i];
+                lines[i * 2] = styleArray.lines[i * 2];
+                lines[i * 2 + 1] = styleArray.lines[i * 2 + 1];
+                const m = styleArray.matrices[i];
+                mats[i * 6] = m.a;
+                mats[i * 6 + 1] = m.c;
+                mats[i * 6 + 2] = m.tx;
+                mats[i * 6 + 3] = m.b;
+                mats[i * 6 + 4] = m.d;
+                mats[i * 6 + 5] = m.ty;
+            }
+            const sizes = shaderHere.uniforms.samplerSize;
+            for (let i = 0; i < groupTextureCount; i++) {
+                sizes[i * 2] = texArray.elements[i].width;
+                sizes[i * 2 + 1] = texArray.elements[i].height;
+            }
+
+            renderer.shader.bind(shaderHere);
+            if (shaderChange) {
+                renderer.geometry.bind(geometry);
+            }
+
+            //TODO: bind styles!
+            for (let j = 0; j < groupTextureCount; j++) {
+                renderer.texture.bind(texArray.elements[j], j);
+            }
+
+            // bind the geometry...
+            renderer.geometry.draw(DRAW_MODES.TRIANGLES, size, start);
         }
     }
 
-    protected _renderDrawCallDirect(renderer: Renderer, drawCall: BatchDrawCall): void
-    {
-        const { texArray, type, size, start } = drawCall;
-        const groupTextureCount = texArray.count;
-
-        for (let j = 0; j < groupTextureCount; j++)
-        {
-            renderer.texture.bind(texArray.elements[j], j);
-        }
-
-        renderer.geometry.draw(type, size, start);
-    }
-
-    protected _resolveDirectShader(renderer: Renderer): Shader
-    {
+    protected _resolveDirectShader(renderer: Renderer): Shader {
         let shader = this.shader;
 
         const pluginName = this.pluginName;
 
-        if (!shader)
-        {
-            // if there is no shader here, we can use the default shader.
-            // and that only gets created if we actually need it..
-            // but may be more than one plugins for graphics
-            if (!DEFAULT_SHADERS[pluginName])
-            {
-                // const MAX_TEXTURES = renderer.plugins.batch.MAX_TEXTURES;
-                // const sampleValues = new Int32Array(MAX_TEXTURES);
-                //
-                // for (let i = 0; i < MAX_TEXTURES; i++)
-                // {
-                //     sampleValues[i] = i;
-                // }
-
-                const uniforms = {
-                    tint: new Float32Array([1, 1, 1, 1]),
-                    translationMatrix: new Matrix(),
-                    resolution: 1,
-                    expand: 1,
-                    //default: UniformGroup.from({ uSamplers: sampleValues }, true),
-                };
-
-                const program = renderer.plugins[pluginName]._shader.program;
-
-                DEFAULT_SHADERS[pluginName] = new Shader(program, uniforms);
+        if (!shader) {
+            if (!DEFAULT_SHADERS[pluginName]) {
+                DEFAULT_SHADERS[pluginName] = new SmoothGraphicsShader(defaultShaderSettings);
             }
-
             shader = DEFAULT_SHADERS[pluginName];
         }
 
         return shader;
     }
 
-    protected _calculateBounds(): void
-    {
+    protected _calculateBounds(): void {
         this.finishPoly();
 
         const geometry = this._geometry;
 
         // skipping when graphics is empty, like a container
-        if (!geometry.graphicsData.length)
-        {
+        if (!geometry.graphicsData.length) {
             return;
         }
 
-        const { minX, minY, maxX, maxY } = geometry.bounds;
+        const {minX, minY, maxX, maxY} = geometry.bounds;
 
         this._bounds.addFrame(this.transform, minX, minY, maxX, maxY);
     }
 
-    public containsPoint(point: IPointData): boolean
-    {
+    public containsPoint(point: IPointData): boolean {
         this.worldTransform.applyInverse(point, SmoothGraphics._TEMP_POINT);
 
         return this._geometry.containsPoint(SmoothGraphics._TEMP_POINT);
     }
 
-    protected calculateTints(): void
-    {
-        if (this.batchTint !== this.tint)
-        {
+    protected calculateTints(): void {
+        if (this.batchTint !== this.tint) {
             this.batchTint = this.tint;
 
             const tintRGB = hex2rgb(this.tint, temp);
 
-            for (let i = 0; i < this.batches.length; i++)
-            {
+            for (let i = 0; i < this.batches.length; i++) {
                 const batch = this.batches[i];
 
                 const batchTint = batch._batchRGB;
@@ -800,12 +719,10 @@ export class SmoothGraphics extends Container
         }
     }
 
-    protected calculateVertices(): void
-    {
+    protected calculateVertices(): void {
         const wtID = this.transform._worldID;
 
-        if (this._transformID === wtID)
-        {
+        if (this._transformID === wtID) {
             return;
         }
 
@@ -824,8 +741,7 @@ export class SmoothGraphics extends Container
 
         let count = 0;
 
-        for (let i = 0; i < data.length; i += 2)
-        {
+        for (let i = 0; i < data.length; i += 2) {
             const x = data[i];
             const y = data[i + 1];
 
@@ -834,12 +750,10 @@ export class SmoothGraphics extends Container
         }
     }
 
-    public closePath(): this
-    {
+    public closePath(): this {
         const currentPath = this.currentPath;
 
-        if (currentPath)
-        {
+        if (currentPath) {
             // we don't need to add extra point in the end because buildLine will take care of that
             currentPath.closeStroke = true;
         }
@@ -847,34 +761,29 @@ export class SmoothGraphics extends Container
         return this;
     }
 
-    public setMatrix(matrix: Matrix): this
-    {
+    public setMatrix(matrix: Matrix): this {
         this._matrix = matrix;
 
         return this;
     }
 
-    public beginHole(): this
-    {
+    public beginHole(): this {
         this.finishPoly();
         this._holeMode = true;
 
         return this;
     }
 
-    public endHole(): this
-    {
+    public endHole(): this {
         this.finishPoly();
         this._holeMode = false;
 
         return this;
     }
 
-    public destroy(options?: IDestroyOptions|boolean): void
-    {
+    public destroy(options?: IDestroyOptions | boolean): void {
         this._geometry.refCount--;
-        if (this._geometry.refCount === 0)
-        {
+        if (this._geometry.refCount === 0) {
             this._geometry.dispose();
         }
 
@@ -894,16 +803,13 @@ export class SmoothGraphics extends Container
     }
 
     drawStar(x: number, y: number,
-             points: number, radius: number, innerRadius: number, rotation = 0): SmoothGraphics
-    {
+             points: number, radius: number, innerRadius: number, rotation = 0): SmoothGraphics {
         return this.drawPolygon(new Star(x, y, points, radius, innerRadius, rotation) as Polygon);
     }
 }
 
-export class Star extends Polygon
-{
-    constructor(x: number, y: number, points: number, radius: number, innerRadius?: number, rotation = 0)
-    {
+export class Star extends Polygon {
+    constructor(x: number, y: number, points: number, radius: number, innerRadius?: number, rotation = 0) {
         innerRadius = innerRadius || radius / 2;
 
         const startAngle = (-1 * Math.PI / 2) + rotation;
@@ -911,8 +817,7 @@ export class Star extends Polygon
         const delta = PI_2 / len;
         const polygon = [];
 
-        for (let i = 0; i < len; i++)
-        {
+        for (let i = 0; i < len; i++) {
             const r = i % 2 ? innerRadius : radius;
             const angle = (i * delta) + startAngle;
 

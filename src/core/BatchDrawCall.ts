@@ -124,7 +124,7 @@ export class BatchDrawCall {
      * @param matrix
      * @returns -1 if not possible to add
      */
-    add(texture: Texture, matrix: Matrix): number {
+    add(texture: Texture, matrix: Matrix, lineWidth: number, lineAlignment: number): number {
         const {texArray, TICK, styleArray, settings} = this;
         const {baseTexture} = texture;
         // check tex
@@ -134,7 +134,7 @@ export class BatchDrawCall {
         const loc = baseTexture._batchEnabled !== TICK ? texArray.count : baseTexture._batchLocation;
         // check and add style
         // add1 -> add2 only works in chain, not when there are several adds inside
-        const res = styleArray.add(loc, matrix || Matrix.IDENTITY, settings);
+        const res = styleArray.add(loc, matrix || Matrix.IDENTITY, lineWidth, lineAlignment, settings);
         if (res >= 0) {
             // SUCCESS here
             // add tex

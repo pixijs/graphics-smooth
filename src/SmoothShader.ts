@@ -1,8 +1,5 @@
 import {
-    AbstractBatchRenderer, BatchGeometry,
-    BatchShaderGenerator,
-    IBatchFactoryOptions,
-    Program, Renderer,
+    Program,
     Shader
 } from '@pixi/core';
 import {Matrix} from '@pixi/math';
@@ -92,7 +89,7 @@ void main(void){
     type -= capType * 32.0;
 
     int styleId = int(aStyleId + 0.5);
-    float lineWidth = styleLine[2.0 * styleId] * 0.5;
+    float lineWidth = styleLine[styleId].x * 0.5;
     vTextureId = styleTextureId[styleId];
     vTextureCoord = vec2(0.0);
 
@@ -109,8 +106,9 @@ void main(void){
         vDistance = vec4(0.0, -0.5, -0.5, 1.0);
         vType = 0.0;
 
-        vTexturePixel.x = dot(pointA, styleMatrix[styleId * 2]);
-        vTexturePixel.y = dot(pointA, styleMatrix[styleId * 2 + 1]);
+        vec2 vTexturePixel;
+        vTexturePixel.x = dot(vec3(aPoint1, 1.0), styleMatrix[styleId * 2]);
+        vTexturePixel.y = dot(vec3(aPoint1, 1.0), styleMatrix[styleId * 2 + 1]);
         vTextureCoord = vTexturePixel / samplerSize[int(vTextureId)];
     } else if (type >= FILL_EXPAND && type < FILL_EXPAND + 7.5) {
         // expand vertices
@@ -352,8 +350,7 @@ varying vec4 vDistance;
 varying float vType;
 varying float vTextureId;
 varying vec2 vTextureCoord;
-
-//%forloop% %count%
+uniform sampler2D uSamplers[%MAX_TEXTURES%];
 
 void main(void){
     float alpha = 1.0;
@@ -421,6 +418,7 @@ export class SmoothGraphicsShader extends Shader {
         super(prog, (Object as any).assign(uniforms, {
             styleMatrix: new Float32Array(6 * maxStyles),
             styleTextureId: new Float32Array(maxStyles),
+            styleLine: new Float32Array(2 * maxStyles),
             samplerSize: new Float32Array(2 * maxTextures),
             uSamplers: sampleValues,
             tint: new Float32Array([1, 1, 1, 1]),
@@ -456,45 +454,3 @@ export class SmoothGraphicsShader extends Shader {
         return src;
     }
 }
-
-
-export class SmoothShaderGenerator extends BatchShaderGenerator {
-    generateShader(maxTextures: number): Shader {
-        if (!this.programCache[maxTextures]) {
-            this.programCache[maxTextures] = new Program(this.vertexSrc, this.fragTemplate);
-        }
-
-        const uniforms = {
-            tint: new Float32Array([1, 1, 1, 1]),
-            translationMatrix: new Matrix(),
-            resolution: 1,
-            expand: 1,
-        };
-
-        return new Shader(this.programCache[maxTextures], uniforms);
-    }
-
-}
-
-export class SmoothRendererFactory {
-    static create(options?: IBatchFactoryOptions): typeof AbstractBatchRenderer {
-        const {vertex, fragment, vertexSize, geometryClass} = Object.assign({
-            vertex: smoothVert,
-            fragment: smoothFrag,
-            geometryClass: BatchGeometry,
-            vertexSize: 11,
-        }, options);
-
-        return class BatchPlugin extends AbstractBatchRenderer {
-            constructor(renderer: Renderer) {
-                super(renderer);
-
-                this.shaderGenerator = new SmoothShaderGenerator(vertex, fragment);
-                this.geometryClass = geometryClass;
-                this.vertexSize = vertexSize;
-            }
-        };
-    }
-}
-
-export const SmoothRenderer = SmoothRendererFactory.create();
