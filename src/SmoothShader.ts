@@ -306,8 +306,8 @@ void main(void){
                         }
                     }
                     vType = 1.0;
-                    dy2 = sign * dot(pos, norm) - lineWidth;
-                    dy3 = sign * dot(pos, norm2) - lineWidth;
+                    dy = -sign * dot(pos, norm);
+                    dy2 = -sign * dot(pos, norm2);
                 }
                 if (type >= BEVEL && type < BEVEL + 1.5) {
                     if (inner < 0.5) {
@@ -350,6 +350,7 @@ uniform sampler2D uSamplers[%MAX_TEXTURES%];
 
 void main(void){
     float alpha = 1.0;
+    float lineWidth = vDistance.w;
     if (vType < 0.5) {
         float left = max(vDistance.x - 0.5, -vDistance.w);
         float right = min(vDistance.x + 0.5, vDistance.w);
@@ -359,11 +360,11 @@ void main(void){
         float bottom = min(vDistance.z + 0.5, 0.0);
         alpha = max(right - left, 0.0) * max(bottom - top, 0.0) * max(far - near, 0.0);
     } else if (vType < 1.5) {
-        float near = vDistance.y - 0.5;
-        float far = min(vDistance.y + 0.5, 0.0);
-        float top = vDistance.z - 0.5;
-        float bottom = min(vDistance.z + 0.5, 0.0);
-        alpha = max(bottom - top, 0.0) * max(far - near, 0.0);
+        float a1 = clamp(vDistance.x + 0.5 - lineWidth, 0.0, 1.0);
+        float a2 = clamp(vDistance.x + 0.5 + lineWidth, 0.0, 1.0);
+        float b1 = clamp(vDistance.y + 0.5 - lineWidth, 0.0, 1.0);
+        float b2 = clamp(vDistance.y + 0.5 + lineWidth, 0.0, 1.0);
+        alpha = a2 * b2 - a1 * b1;
     } else if (vType < 2.5) {
         alpha *= max(min(vDistance.x + 0.5, 1.0), 0.0);
         alpha *= max(min(vDistance.y + 0.5, 1.0), 0.0);
