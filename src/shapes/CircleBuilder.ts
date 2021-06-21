@@ -121,7 +121,7 @@ export class CircleBuilder implements IShapeBuilder
     {
         const { verts, joints } = target;
         const { points } = graphicsData;
-        const joint = graphicsData.jointType();
+        const joint = graphicsData.goodJointType();
         const len = points.length;
 
         verts.push(points[len - 2], points[len - 1]);
@@ -129,7 +129,7 @@ export class CircleBuilder implements IShapeBuilder
         for (let i = 2; i < len; i += 2)
         {
             verts.push(points[i], points[i + 1]);
-            joints.push(joint + 3);
+            joints.push(joint);
         }
         verts.push(points[2], points[3]);
         joints.push(JOINT_TYPE.NONE);

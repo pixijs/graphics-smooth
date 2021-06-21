@@ -100,6 +100,25 @@ export class SmoothGraphicsData
         return cap;
     }
 
+    public goodJointType() {
+        let joint: number;
+
+        switch (this.lineStyle.join)
+        {
+            case LINE_JOIN.BEVEL:
+                joint = JOINT_TYPE.JOINT_BEVEL;
+                break;
+            case LINE_JOIN.ROUND:
+                joint = JOINT_TYPE.JOINT_ROUND;
+                break;
+            default:
+                joint = JOINT_TYPE.JOINT_MITER + 3;
+                break;
+        }
+
+        return joint;
+    }
+
     public jointType()
     {
         let joint: number;

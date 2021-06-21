@@ -98,7 +98,9 @@ export class RoundedRectangleBuilder implements IShapeBuilder
         const { verts, joints } = target;
         const { points } = graphicsData;
 
-        const joint = graphicsData.jointType();
+
+        const joint = points.length === 8 // we dont need joints for arcs
+            ? graphicsData.goodJointType() : JOINT_TYPE.JOINT_MITER + 3;
         const len = points.length;
 
         verts.push(points[len - 2], points[len - 1]);
@@ -106,9 +108,11 @@ export class RoundedRectangleBuilder implements IShapeBuilder
         for (let i = 0; i < len; i += 2)
         {
             verts.push(points[i], points[i + 1]);
-            joints.push(joint + 3);
+            joints.push(joint);
         }
         verts.push(points[0], points[1]);
+        joints.push(JOINT_TYPE.NONE);
+        verts.push(points[2], points[3]);
         joints.push(JOINT_TYPE.NONE);
     }
 
