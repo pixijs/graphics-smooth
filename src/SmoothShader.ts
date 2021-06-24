@@ -188,8 +188,8 @@ void main(void){
         float collinear = step(0.0, dot(norm, norm2));
 
         vType = 0.0;
-        float dy2 = -0.5;
-        float dy3 = -0.5;
+        float dy2 = -1000.0;
+        float dy3 = -1000.0;
 
         if (abs(D) < 0.01 && collinear < 0.5) {
             if (type >= ROUND && type < ROUND + 1.5) {
