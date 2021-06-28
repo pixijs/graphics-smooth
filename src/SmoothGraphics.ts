@@ -11,7 +11,7 @@ import {
 } from '@pixi/math';
 
 import { Texture, State, Renderer, Shader } from '@pixi/core';
-import { graphicsUtils, LINE_JOIN, LINE_CAP, ILineStyleOptions, Graphics } from '@pixi/graphics';
+import { graphicsUtils, LINE_JOIN, LINE_CAP, Graphics } from '@pixi/graphics';
 import { hex2rgb } from '@pixi/utils';
 import { SmoothGraphicsGeometry } from './SmoothGraphicsGeometry';
 import { BLEND_MODES, DRAW_MODES } from '@pixi/constants';
@@ -41,6 +41,16 @@ export interface IFillStyleOptions {
     texture?: Texture;
     matrix?: Matrix;
     smooth?: boolean;
+    shader?: Shader;
+}
+
+export interface ILineStyleOptions extends IFillStyleOptions {
+    width?: number;
+    alignment?: number;
+    native?: boolean;
+    cap?: LINE_CAP;
+    join?: LINE_JOIN;
+    miterLimit?: number;
 }
 
 export class SmoothGraphics extends Container
@@ -176,6 +186,7 @@ export class SmoothGraphics extends Container
             cap: LINE_CAP.BUTT,
             join: LINE_JOIN.MITER,
             miterLimit: 10,
+            shader: null,
         }, options);
 
         if (this.currentPath)
@@ -719,22 +730,22 @@ export class SmoothGraphics extends Container
             {
                 texs[i] = styleArray.textureIds[i];
                 lines[i * 2] = styleArray.lines[i * 2];
-                lines[i * 2 + 1] = styleArray.lines[i * 2 + 1];
+                lines[(i * 2) + 1] = styleArray.lines[(i * 2) + 1];
                 const m = styleArray.matrices[i];
 
                 mats[i * 6] = m.a;
-                mats[i * 6 + 1] = m.c;
-                mats[i * 6 + 2] = m.tx;
-                mats[i * 6 + 3] = m.b;
-                mats[i * 6 + 4] = m.d;
-                mats[i * 6 + 5] = m.ty;
+                mats[(i * 6) + 1] = m.c;
+                mats[(i * 6) + 2] = m.tx;
+                mats[(i * 6) + 3] = m.b;
+                mats[(i * 6) + 4] = m.d;
+                mats[(i * 6) + 5] = m.ty;
             }
             const sizes = shaderHere.uniforms.samplerSize;
 
             for (let i = 0; i < groupTextureCount; i++)
             {
                 sizes[i * 2] = texArray.elements[i].width;
-                sizes[i * 2 + 1] = texArray.elements[i].height;
+                sizes[(i * 2) + 1] = texArray.elements[i].height;
             }
 
             renderer.shader.bind(shaderHere);

@@ -5,7 +5,7 @@ export class SegmentPacker
 {
     static vertsByJoint: Array<number> = [];
 
-    strideFloats = 11;
+    strideFloats = 12;
 
     updateBufferSize(jointStart: number, jointLen: number, triangles: number, target: BuildData)
     {
@@ -36,10 +36,10 @@ export class SegmentPacker
 
             const vs = SegmentPacker.vertsByJoint[joint] + SegmentPacker.vertsByJoint[prevCap];
 
-            if (vs >= 3)
+            if (vs >= 4)
             {
                 vertexSize += vs;
-                indexSize += (vs - 2) * 3;
+                indexSize += 6 + (3 * Math.max(vs - 6, 0));
             }
         }
         if (foundTriangle)
@@ -86,10 +86,13 @@ export class SegmentPacker
         let indPos = this.indexPos;
         let index = this.bufferPos / this.strideFloats;
 
+        // eslint-disable-next-line max-len
         let x1: number; let y1: number; let x2: number; let y2: number; let prevX: number; let prevY: number; let nextX: number; let
             nextY: number;
         // let type: number;
         let hasTriangle = false;
+
+        let travel = 0;
 
         for (let j = jointStart; j < jointStart + jointLen; j++)
         {
@@ -101,8 +104,8 @@ export class SegmentPacker
             {
                 // just one vertex
                 hasTriangle = true;
-                x1 = verts[j * 2];
-                y1 = verts[j * 2 + 1];
+                x1 = verts[(j * 2)];
+                y1 = verts[(j * 2) + 1];
                 bufFloat[bufPos] = x1;
                 bufFloat[bufPos + 1] = y1;
                 bufFloat[bufPos + 2] = x1;
@@ -111,9 +114,10 @@ export class SegmentPacker
                 bufFloat[bufPos + 5] = y1;
                 bufFloat[bufPos + 6] = x1;
                 bufFloat[bufPos + 7] = y1;
-                bufFloat[bufPos + 8] = 16 * joint;
-                bufFloat[bufPos + 9] = lineStyle;
-                bufUint[bufPos + 10] = color;
+                bufFloat[bufPos + 8] = travel;
+                bufFloat[bufPos + 9] = 16 * joint;
+                bufFloat[bufPos + 10] = lineStyle;
+                bufUint[bufPos + 11] = color;
                 bufPos += strideFloats;
                 continue;
             }
@@ -121,11 +125,11 @@ export class SegmentPacker
             if (joint >= JOINT_TYPE.FILL_EXPAND)
             {
                 prevX = verts[j * 2];
-                prevY = verts[j * 2 + 1];
-                x1 = verts[j * 2 + 2];
-                y1 = verts[j * 2 + 3];
-                x2 = verts[j * 2 + 4];
-                y2 = verts[j * 2 + 5];
+                prevY = verts[(j * 2) + 1];
+                x1 = verts[(j * 2) + 2];
+                y1 = verts[(j * 2) + 3];
+                x2 = verts[(j * 2) + 4];
+                y2 = verts[(j * 2) + 5];
 
                 const bis = j + 3;
 
@@ -138,10 +142,12 @@ export class SegmentPacker
                     bufFloat[bufPos + 4] = x2;
                     bufFloat[bufPos + 5] = y2;
                     bufFloat[bufPos + 6] = verts[(bis + i) * 2];
-                    bufFloat[bufPos + 7] = verts[(bis + i) * 2 + 1];
-                    bufFloat[bufPos + 8] = 16 * fullJoint + i;
-                    bufFloat[bufPos + 9] = lineStyle;
-                    bufUint[bufPos + 10] = color;
+                    bufFloat[bufPos + 7] = verts[((bis + i) * 2) + 1];
+
+                    bufFloat[bufPos + 8] = travel;
+                    bufFloat[bufPos + 9] = (16 * fullJoint) + i;
+                    bufFloat[bufPos + 10] = lineStyle;
+                    bufUint[bufPos + 11] = color;
                     bufPos += strideFloats;
                 }
 
@@ -160,17 +166,24 @@ export class SegmentPacker
                 continue;
             }
             x1 = verts[j * 2];
-            y1 = verts[j * 2 + 1];
-            x2 = verts[j * 2 + 2];
-            y2 = verts[j * 2 + 3];
+            y1 = verts[(j * 2) + 1];
+            x2 = verts[(j * 2) + 2];
+            y2 = verts[(j * 2) + 3];
             // TODO: caps here
-            prevX = verts[j * 2 - 2];
-            prevY = verts[j * 2 - 1];
+            prevX = verts[(j * 2) - 2];
+            prevY = verts[(j * 2) - 1];
+
+            const dist = Math.sqrt(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)));
+
+            if (SegmentPacker.vertsByJoint[joint] === 0)
+            {
+                travel -= dist;
+            }
 
             if ((joint & ~2) !== JOINT_TYPE.JOINT_CAP_BUTT)
             {
-                nextX = verts[j * 2 + 4];
-                nextY = verts[j * 2 + 5];
+                nextX = verts[(j * 2) + 4];
+                nextY = verts[(j * 2) + 5];
             }
             else
             {
@@ -189,11 +202,14 @@ export class SegmentPacker
                 bufFloat[bufPos + 5] = y2;
                 bufFloat[bufPos + 6] = nextX;
                 bufFloat[bufPos + 7] = nextY;
-                bufFloat[bufPos + 8] = 16 * fullJoint + i;
-                bufFloat[bufPos + 9] = lineStyle;
-                bufUint[bufPos + 10] = color;
+                bufFloat[bufPos + 8] = travel;
+                bufFloat[bufPos + 9] = (16 * fullJoint) + i;
+                bufFloat[bufPos + 10] = lineStyle;
+                bufUint[bufPos + 11] = color;
                 bufPos += strideFloats;
             }
+
+            travel += dist;
 
             indices[indPos] = index;
             indices[indPos + 1] = index + 1;

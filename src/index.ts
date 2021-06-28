@@ -12,3 +12,4 @@ export * from './shapes';
 export * from './SmoothGraphicsGeometry';
 export * from './SmoothGraphics';
 export * from './SmoothShader';
+export * from './DashLineShader';

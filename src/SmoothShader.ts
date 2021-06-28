@@ -25,6 +25,7 @@ attribute vec2 aPoint1;
 attribute vec2 aPoint2;
 attribute vec2 aNext;
 attribute float aVertexJoint;
+attribute float aTravel;
 
 uniform mat3 projectionMatrix;
 uniform mat3 translationMatrix;
@@ -44,6 +45,7 @@ attribute vec4 aColor;
 varying float vTextureId;
 varying vec4 vColor;
 varying vec2 vTextureCoord;
+varying float vTravel;
 
 uniform vec2 styleLine[%MAX_STYLES%];
 uniform vec3 styleMatrix[2 * %MAX_STYLES%];
@@ -75,11 +77,15 @@ void main(void){
 
     vec2 xBasis = pointB - pointA;
     float len = length(xBasis);
-    vec2 norm = vec2(xBasis.y, -xBasis.x) / len;
+    vec2 forward = xBasis / len;
+    vec2 norm = vec2(forward.y, -forward.x);
 
     float type = floor(aVertexJoint / 16.0);
     float vertexNum = aVertexJoint - type * 16.0;
     float dx = 0.0, dy = 1.0;
+
+
+    float avgScale = length((translationMatrix * vec3(1.0, 1.0, 0.0)).xy);
 
     float capType = floor(type / 32.0);
     type -= capType * 32.0;
@@ -209,8 +215,8 @@ void main(void){
                 }
             }
             if (capType >= CAP_BUTT && capType < CAP_ROUND) {
-                vec2 back = -vec2(-norm.y, norm.x);
                 float extra = step(CAP_SQUARE, capType) * lineWidth;
+                vec2 back = -forward;
                 if (vertexNum < 0.5 || vertexNum > 2.5) {
                     pos += back * (expand + extra);
                     dy2 = expand;
@@ -219,7 +225,6 @@ void main(void){
                 }
             }
             if (type >= JOINT_CAP_BUTT && type < JOINT_CAP_SQUARE + 0.5) {
-                vec2 forward = vec2(-norm.y, norm.x);
                 float extra = step(JOINT_CAP_SQUARE, type) * lineWidth;
                 if (vertexNum < 0.5 || vertexNum > 2.5) {
                     dy3 = dot(pos + base - pointB, forward) - extra;
@@ -333,6 +338,7 @@ void main(void){
 
         pos += base;
         vDistance = vec4(dy, dy2, dy3, lineWidth) * resolution;
+        vTravel = aTravel * avgScale + dot(pos - pointA, vec2(-norm.y, norm.x));
     }
 
     gl_Position = vec4((projectionMatrix * vec3(pos, 1.0)).xy, 0.0, 1.0);
@@ -346,6 +352,7 @@ varying vec4 vDistance;
 varying float vType;
 varying float vTextureId;
 varying vec2 vTextureCoord;
+varying float vTravel;
 uniform sampler2D uSamplers[%MAX_TEXTURES%];
 
 void main(void){

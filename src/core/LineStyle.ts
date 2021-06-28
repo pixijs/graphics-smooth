@@ -21,6 +21,7 @@ export class LineStyle extends FillStyle
         obj.alpha = this.alpha;
         obj.texture = this.texture;
         obj.matrix = this.matrix;
+        obj.shader = this.shader;
         obj.visible = this.visible;
         obj.width = this.width;
         obj.alignment = this.alignment;

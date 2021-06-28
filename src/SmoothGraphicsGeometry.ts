@@ -87,6 +87,7 @@ export class SmoothGraphicsGeometry extends Geometry
             .addAttribute('aPoint1', this._buffer, 2, false, TYPES.FLOAT)
             .addAttribute('aPoint2', this._buffer, 2, false, TYPES.FLOAT)
             .addAttribute('aNext', this._buffer, 2, false, TYPES.FLOAT)
+            .addAttribute('aTravel', this._buffer, 1, false, TYPES.FLOAT)
             // number of vertex
             .addAttribute('aVertexJoint', this._buffer, 1, false, TYPES.FLOAT)
             // line width, alignment
@@ -95,7 +96,7 @@ export class SmoothGraphicsGeometry extends Geometry
             .addAttribute('aColor', this._buffer, 4, true, TYPES.UNSIGNED_BYTE)
             .addIndex(this._indexBuffer);
 
-        this.strideFloats = 11;
+        this.strideFloats = 12;
     }
 
     constructor()
