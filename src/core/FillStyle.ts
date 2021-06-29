@@ -41,6 +41,14 @@ export class FillStyle
         return obj;
     }
 
+    /**
+     * returns width multiplied by scaleMode
+     */
+    packLineWidth(): number
+    {
+        return 0;
+    }
+
     reset()
     {
         this.color = 0xFFFFFF;

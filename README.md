@@ -18,7 +18,7 @@ You can find examples in `examples` folder, you have to start the local webserve
 This is drop-in replacement of `PIXI.Graphics`, API is compatible.
 
 ```js
-import {SmoothGraphics as Graphics} from '@pixi/graphics-smooth';
+import { SmoothGraphics as Graphics } from '@pixi/graphics-smooth';
 
 const graphics = new Graphics();
 
@@ -28,7 +28,27 @@ graphics.lineTo(200, 200);
 
 There are differences with old graphics:
 1. `alignment` is not supported yet
-2. line `width` is always scale-independent
+
+### LineScaleMode
+
+For lines, `native` mode is renamed to `scaleMode`, you can ignore scale of element or even set default value for it!
+
+```js
+import { SmoothGraphics, LINE_SCALE_MODE, settings } from '@pixi/graphics-smooth';
+
+graphics.lineStyle({ width: 2.0, scaleMode: LINE_SCALE_MODE.NONE }); // now its always 2 independent from scale
+
+//alternatively
+settings.LINE_SCALE_MODE = LINE_SCALE_MODE.NONE;
+
+const graphics2 = new SmoothGraphics();
+graphics.lineStyle(2.0, 0xffffff, 1.0); //the usual, but scaleMode works by default
+
+settings.LINE_SCALE_MODE = LINE_SCALE_MODE.NORMAL;
+graphics.lineStyle(2.0, 0xffffff, 1.0); //its normal again
+```
+
+Note: `NONE` was the only option for `graphics-smooth <= 0.0.6`. Please update your code if you used early versions!
 
 ### How to draw fills
 
@@ -47,13 +67,12 @@ HHAA doesn't work with texture fill yet.
 * support for line alignment
 * support for line textures
 * rope mode for line textures
-* line scale modes
 
 ## Performance
 
 Currently graphics geometry uses 11 floats per vertex, when original graphics used only 8. Number of vertices also differ, it might use up to 2x of original.
 
-Uniforms are used to store styles depends on (lineWidth, lineAlignment, texture, matrix).
+Uniforms are used to store styles depends on (lineWidth * scaleMode, lineAlignment, texture, matrix).
 
 If style buffer is too big (for now its max 24), one more drawcall will spawn.
 

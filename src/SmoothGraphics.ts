@@ -21,19 +21,15 @@ import type { IShape, IPointData } from '@pixi/math';
 import type { IDestroyOptions } from '@pixi/display';
 import { IGraphicsBatchSettings } from './core/BatchDrawCall';
 import { FillStyle } from './core/FillStyle';
-import { LineStyle } from './core/LineStyle';
+import {LINE_SCALE_MODE, LineStyle} from './core/LineStyle';
 import { SmoothGraphicsShader } from './SmoothShader';
+import { settings } from "./settings";
 
 const { BezierUtils, QuadraticUtils, ArcUtils } = graphicsUtils;
 
 const temp = new Float32Array(3);
 // a default shaders map used by graphics..
 const DEFAULT_SHADERS: { [key: string]: Shader } = {};
-
-export const defaultShaderSettings: IGraphicsBatchSettings = {
-    maxStyles: 24,
-    maxTextures: 4,
-};
 
 export interface IFillStyleOptions {
     color?: number;
@@ -47,7 +43,7 @@ export interface IFillStyleOptions {
 export interface ILineStyleOptions extends IFillStyleOptions {
     width?: number;
     alignment?: number;
-    native?: boolean;
+    scaleMode: LINE_SCALE_MODE;
     cap?: LINE_CAP;
     join?: LINE_JOIN;
     miterLimit?: number;
@@ -58,6 +54,7 @@ export class SmoothGraphics extends Container
     static _TEMP_POINT = new Point();
 
     public shader: Shader;
+    public shaderSettings: IGraphicsBatchSettings;
     public pluginName: string;
     public currentPath: Polygon;
 
@@ -89,6 +86,11 @@ export class SmoothGraphics extends Container
         this._geometry.refCount++;
 
         this.shader = null;
+
+        this.shaderSettings = {
+            maxStyles: settings.SHADER_MAX_STYLES,
+            maxTextures: settings.SHADER_MAX_TEXTURES,
+        };
 
         this.state = State.for2d();
 
@@ -156,17 +158,30 @@ export class SmoothGraphics extends Container
         return this._lineStyle;
     }
 
-    public lineStyle(width: number, color?: number, alpha?: number, alignment?: number, native?: boolean): this;
+    public lineStyle(width: number, color?: number, alpha?: number, alignment?: number, scaleMode?: LINE_SCALE_MODE): this;
 
     public lineStyle(options?: ILineStyleOptions): this;
 
     public lineStyle(options: ILineStyleOptions | number = null,
-        color = 0x0, alpha = 1, alignment = 0.5, native = false): this
+        color = 0x0, alpha = 1, alignment = 0.5, scaleMode = settings.LINE_SCALE_MODE): this
     {
         // Support non-object params: (width, color, alpha, alignment, native)
         if (typeof options === 'number')
         {
-            options = { width: options, color, alpha, alignment, native } as ILineStyleOptions;
+            if (typeof scaleMode === 'boolean')
+            {
+                scaleMode = scaleMode ? LINE_SCALE_MODE.NONE : LINE_SCALE_MODE.NORMAL;
+            }
+            options = { width: options, color, alpha, alignment, scaleMode } as ILineStyleOptions;
+        }
+        else
+        {
+            const native: boolean = (options as any).native;
+
+            if (native !== undefined)
+            {
+                options.scaleMode = native ? LINE_SCALE_MODE.NONE : LINE_SCALE_MODE.NORMAL;
+            }
         }
 
         return this.lineTextureStyle(options);
@@ -187,6 +202,7 @@ export class SmoothGraphics extends Container
             join: LINE_JOIN.MITER,
             miterLimit: 10,
             shader: null,
+            scaleMode: settings.LINE_SCALE_MODE,
         }, options);
 
         if (this.currentPath)
@@ -560,7 +576,7 @@ export class SmoothGraphics extends Container
 
         geometry.checkInstancing(renderer.geometry.hasInstance, hasuint32);
 
-        geometry.updateBatches(defaultShaderSettings);
+        geometry.updateBatches(this.shaderSettings);
 
         if (geometry.batchable)
         {
@@ -775,7 +791,7 @@ export class SmoothGraphics extends Container
         {
             if (!DEFAULT_SHADERS[pluginName])
             {
-                DEFAULT_SHADERS[pluginName] = new SmoothGraphicsShader(defaultShaderSettings);
+                DEFAULT_SHADERS[pluginName] = new SmoothGraphicsShader(this.shaderSettings);
             }
             shader = DEFAULT_SHADERS[pluginName];
         }

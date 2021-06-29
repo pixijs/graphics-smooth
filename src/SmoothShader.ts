@@ -91,7 +91,13 @@ void main(void){
     type -= capType * 32.0;
 
     int styleId = int(aStyleId + 0.5);
-    float lineWidth = styleLine[styleId].x * 0.5;
+    float lineWidth = styleLine[styleId].x;
+    if (lineWidth < 0.0) {
+        lineWidth = -lineWidth;
+    } else {
+        lineWidth = lineWidth * avgScale;
+    }
+    lineWidth *= 0.5;
     vTextureId = styleTextureId[styleId];
     vTextureCoord = vec2(0.0);
 

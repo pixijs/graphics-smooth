@@ -13,3 +13,5 @@ export * from './SmoothGraphicsGeometry';
 export * from './SmoothGraphics';
 export * from './SmoothShader';
 export * from './DashLineShader';
+
+export * from './settings';
