@@ -184,7 +184,7 @@ export class SmoothGraphicsGeometry extends Geometry
 
         for (let i = 0; i < this.drawCalls.length; i++)
         {
-            this.drawCalls[i].texArray.clear();
+            this.drawCalls[i].clear();
             DRAW_CALL_POOL.push(this.drawCalls[i]);
         }
 
