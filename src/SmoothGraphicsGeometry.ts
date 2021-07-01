@@ -3,7 +3,6 @@ import { SmoothGraphicsData } from './core/SmoothGraphicsData';
 import { FILL_COMMANDS } from './shapes';
 
 import {
-    BaseTexture,
     Buffer,
     Geometry,
 } from '@pixi/core';
