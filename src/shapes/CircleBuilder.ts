@@ -33,7 +33,7 @@ export class CircleBuilder implements IShapeBuilder
             height = ellipseData.height;
         }
 
-        if (width === 0 || height === 0)
+        if (width <= 0 || height <= 0)
         {
             return;
         }

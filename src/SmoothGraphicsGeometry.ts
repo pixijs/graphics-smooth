@@ -371,6 +371,10 @@ export class SmoothGraphicsGeometry extends Geometry
             }
 
             data.clearBuild();
+            if (data.points.length <= 2)
+            {
+                continue;
+            }
             if (fillStyle.visible)
             {
                 if (holes.length)
