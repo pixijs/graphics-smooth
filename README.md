@@ -26,9 +26,6 @@ graphics.moveTo(100, 100);
 graphics.lineTo(200, 200);
 ```
 
-There are differences with old graphics:
-1. `alignment` is not supported yet
-
 ### LineScaleMode
 
 For lines, `native` mode is renamed to `scaleMode`, you can ignore scale of element or even set default value for it!
@@ -64,7 +61,6 @@ HHAA doesn't work with texture fill yet.
 ### What are we working on
 
 * better AA on fills
-* support for line alignment
 * support for line textures
 * rope mode for line textures
 

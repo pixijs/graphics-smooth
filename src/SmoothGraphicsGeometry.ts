@@ -704,8 +704,6 @@ export class SmoothGraphicsGeometry extends Geometry
      */
     protected buildDrawCalls(shaderSettings?: IGraphicsBatchSettings)
     {
-        const TICK = ++BaseTexture._globalBatch;
-
         for (let i = 0; i < this.drawCalls.length; i++)
         {
             this.drawCalls[i].clear();
@@ -757,8 +755,6 @@ export class SmoothGraphicsGeometry extends Geometry
             batchData.rgba = premultiplyTint(rgb, alpha);
             batchData.styleId = styleId;
         }
-
-        BaseTexture._globalBatch = TICK;
     }
 
     protected processHoles(holes: Array<SmoothGraphicsData>): void
