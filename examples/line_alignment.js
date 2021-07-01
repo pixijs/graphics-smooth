@@ -19,7 +19,7 @@ function fillGraphics(graphics, alignment1, alignment2) {
 
 const graphics = new PIXI.smooth.SmoothGraphics();
 graphics.position.set(200, 200);
-const graphics2 = new PIXI.smooth.SmoothGraphics();
+const graphics2 = new PIXI.Graphics();
 graphics2.position.set(600, 200);
 app.stage.addChild(graphics, graphics2);
 
@@ -29,6 +29,6 @@ app.ticker.add((delta) =>
     phase += 0.01 * delta;
     const s = (Math.sin(phase) - 1.0) * 0.5;
 
-    fillGraphics(graphics, s, s);
-    fillGraphics(graphics2, s, 1 - s);
+    fillGraphics(graphics, s, -s);
+    fillGraphics(graphics2, s, -s);
 });

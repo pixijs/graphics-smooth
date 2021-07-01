@@ -85,7 +85,8 @@ void main(void){
     float dx = 0.0, dy = 1.0;
 
 
-    float avgScale = length((translationMatrix * vec3(1.0, 1.0, 0.0)).xy);
+    vec2 avgDiag = (translationMatrix * vec3(1.0, 1.0, 0.0)).xy;
+    float avgScale = sqrt(dot(avgDiag, avgDiag) * 0.5);
 
     float capType = floor(type / 32.0);
     type -= capType * 32.0;
