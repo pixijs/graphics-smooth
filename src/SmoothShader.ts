@@ -98,6 +98,7 @@ void main(void){
         lineWidth = lineWidth * avgScale;
     }
     lineWidth *= 0.5;
+    float lineAlignment = 2.0 * styleLine[styleId].y - 1.0;
     vTextureId = styleTextureId[styleId];
     vTextureCoord = vec2(0.0);
 
@@ -196,7 +197,20 @@ void main(void){
         if (D < 0.0) {
             inner = 1.0 - inner;
         }
+
         norm2 *= sign2;
+
+        if (abs(lineAlignment) > 0.01) {
+            float shift = lineWidth * lineAlignment;
+            pointA += norm * shift;
+            pointB += norm * shift;
+            if (abs(D) < 0.01) {
+                base += norm * shift;
+            } else {
+                base += doBisect(norm, len, norm2, len2, shift, 0.0);
+            }
+        }
+
         float collinear = step(0.0, dot(norm, norm2));
 
         vType = 0.0;
