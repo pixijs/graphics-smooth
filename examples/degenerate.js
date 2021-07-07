@@ -6,7 +6,7 @@ const app = new PIXI.Application({ antialias: false,
 document.body.appendChild(app.view);
 
 function makeFigures(graphics) {
-    graphics.lineStyle(10, 0, 1);
+    graphics.lineStyle(10, 0, 0.5);
 
     graphics.moveTo(100, 50);
     graphics.lineTo(600, 50);
@@ -22,6 +22,12 @@ function makeFigures(graphics) {
     graphics.lineTo(300, 150);
     graphics.lineTo(400, 150);
     graphics.lineTo(600, 150);
+
+    graphics.moveTo(150, 200);
+    graphics.lineTo(100, 250);
+    graphics.lineTo(200, 250);
+    graphics.lineTo(120, 250);
+    graphics.lineTo(220, 300);
 }
 
 const graphics = new PIXI.smooth.SmoothGraphics();
