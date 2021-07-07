@@ -66,7 +66,7 @@ export class PolyBuilder implements IShapeBuilder
 
             if (Math.abs(x3 * y1 - y3 * x1) < eps2)
             {
-                if (x1 * x2 + y1 * y2 < -eps2)
+                if (x1 * x3 + y1 * y3 < -eps2)
                 {
                     flag = false;
                 }
