@@ -1,4 +1,4 @@
-import { LINE_SCALE_MODE } from "./core/LineStyle";
+import { LINE_SCALE_MODE } from './core/LineStyle';
 
 export interface ISettings {
     LINE_SCALE_MODE: string;

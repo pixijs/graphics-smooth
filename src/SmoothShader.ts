@@ -71,6 +71,15 @@ vec2 doBisect(vec2 norm, float len, vec2 norm2, float len2,
     return dy * bisect;
 }
 
+float up;
+float down;
+
+void swap() {
+    float tmp = up;
+    up = down;
+    down = tmp;
+}
+
 void main(void){
     vec2 pointA = (translationMatrix * vec3(aPoint1, 1.0)).xy;
     vec2 pointB = (translationMatrix * vec3(aPoint2, 1.0)).xy;
@@ -82,8 +91,6 @@ void main(void){
 
     float type = floor(aVertexJoint / 16.0);
     float vertexNum = aVertexJoint - type * 16.0;
-    float dx = 0.0, dy = 1.0;
-
 
     vec2 avgDiag = (translationMatrix * vec3(1.0, 1.0, 0.0)).xy;
     float avgScale = sqrt(dot(avgDiag, avgDiag) * 0.5);
@@ -168,10 +175,11 @@ void main(void){
         vDistance.xyz *= resolution;
         vType = 2.0;
     } else if (type >= BEVEL) {
-        float dy = lineWidth + expand;
+        up = lineWidth * (1.0 + lineAlignment) + expand;
+        down = lineWidth * (-1.0 + lineAlignment) - expand;
         float inner = 0.0;
         if (vertexNum >= 1.5) {
-            dy = -dy;
+            swap();
             inner = 1.0;
         }
 
@@ -200,7 +208,7 @@ void main(void){
         }
 
         norm2 *= sign2;
-
+/*
         if (abs(lineAlignment) > 0.01) {
             float shift = lineWidth * lineAlignment;
             pointA += norm * shift;
@@ -211,7 +219,7 @@ void main(void){
                 base += doBisect(norm, len, norm2, len2, shift, 0.0);
             }
         }
-
+*/
         float collinear = step(0.0, dot(norm, norm2));
 
         vType = 0.0;
@@ -227,12 +235,12 @@ void main(void){
 
         if (vertexNum < 3.5) {
             if (abs(D) < 0.01) {
-                pos = dy * norm;
+                pos = up * norm;
             } else {
                 if (flag < 0.5 && inner < 0.5) {
-                    pos = dy * norm;
+                    pos = up * norm;
                 } else {
-                    pos = doBisect(norm, len, norm2, len2, dy, inner);
+                    pos = doBisect(norm, len, norm2, len2, up, inner);
                 }
             }
             if (capType >= CAP_BUTT && capType < CAP_ROUND) {
@@ -259,98 +267,98 @@ void main(void){
             }
         } else if (type >= JOINT_CAP_ROUND && type < JOINT_CAP_ROUND + 1.5) {
             if (inner > 0.5) {
-                dy = -dy;
+                swap();
                 inner = 0.0;
             }
-            vec2 d2 = abs(dy) * vec2(-norm.y, norm.x);
+            vec2 d2 = abs(up) * vec2(-norm.y, norm.x);
             if (vertexNum < 4.5) {
-                dy = -dy;
-                pos = dy * norm;
+                swap();
+                pos = up * norm;
             } else if (vertexNum < 5.5) {
-                pos = dy * norm;
+                pos = up * norm;
             } else if (vertexNum < 6.5) {
-                pos = dy * norm + d2;
+                pos = up * norm + d2;
             } else {
-                dy = -dy;
-                pos = dy * norm + d2;
+                swap();
+                pos = up * norm + d2;
             }
-            dy = -0.5;
+            up = -0.5;
             dy2 = pos.x;
             dy3 = pos.y;
             vType = 3.0;
         } else if (abs(D) < 0.01) {
-            pos = dy * norm;
+            pos = up * norm;
         } else {
             if (type >= ROUND && type < ROUND + 1.5) {
                 if (inner > 0.5) {
-                    dy = -dy;
+                    swap();
                     inner = 0.0;
                 }
                 if (vertexNum < 4.5) {
-                    pos = doBisect(norm, len, norm2, len2, -dy, 1.0);
+                    pos = doBisect(norm, len, norm2, len2, -down, 1.0);
                 } else if (vertexNum < 5.5) {
-                    pos = dy * norm;
+                    pos = up * norm;
                 } else if (vertexNum > 7.5) {
-                    pos = dy * norm2;
+                    pos = up * norm2;
                 } else {
-                    pos = doBisect(norm, len, norm2, len2, dy, 0.0);
-                    float d2 = abs(dy);
-                    if (length(pos) > abs(dy) * 1.5) {
+                    pos = doBisect(norm, len, norm2, len2, up, 0.0);
+                    float d2 = abs(up);
+                    if (length(pos) > abs(up) * 1.5) {
                         if (vertexNum < 6.5) {
-                            pos.x = dy * norm.x - d2 * norm.y;
-                            pos.y = dy * norm.y + d2 * norm.x;
+                            pos.x = up * norm.x - d2 * norm.y;
+                            pos.y = up * norm.y + d2 * norm.x;
                         } else {
-                            pos.x = dy * norm2.x + d2 * norm2.y;
-                            pos.y = dy * norm2.y - d2 * norm2.x;
+                            pos.x = up * norm2.x + d2 * norm2.y;
+                            pos.y = up * norm2.y - d2 * norm2.x;
                         }
                     }
                 }
                 vec2 norm3 = normalize(norm - norm2);
-                dy = pos.x * norm3.y - pos.y * norm3.x - 3.0;
+                up = pos.x * norm3.y - pos.y * norm3.x - 3.0;
                 dy2 = pos.x;
                 dy3 = pos.y;
                 vType = 3.0;
             } else {
                 if (type >= MITER && type < MITER + 3.5) {
                     if (inner > 0.5) {
-                        dy = -dy;
+                        swap();
                         inner = 0.0;
                     }
-                    float sign = step(0.0, dy) * 2.0 - 1.0;
-                    pos = doBisect(norm, len, norm2, len2, dy, 0.0);
-                    if (length(pos) > abs(dy) * MITER_LIMIT) {
+                    float sign = step(0.0, up) * 2.0 - 1.0;
+                    pos = doBisect(norm, len, norm2, len2, up, 0.0);
+                    if (length(pos) > abs(up) * MITER_LIMIT) {
                         type = BEVEL;
                     } else {
                         if (vertexNum < 4.5) {
-                            dy = -dy;
-                            pos = doBisect(norm, len, norm2, len2, dy, 1.0);
+                            swap();
+                            pos = doBisect(norm, len, norm2, len2, up, 1.0);
                         } else if (vertexNum < 5.5) {
-                            pos = dy * norm;
+                            pos = up * norm;
                         } else if (vertexNum > 6.5) {
-                            pos = dy * norm2;
-                            // dy = ...
+                            pos = up * norm2;
+                            // up = ...
                         }
                     }
                     vType = 1.0;
-                    dy = -sign * dot(pos, norm);
+                    up = -sign * dot(pos, norm);
                     dy2 = -sign * dot(pos, norm2);
                 }
                 if (type >= BEVEL && type < BEVEL + 1.5) {
                     if (inner < 0.5) {
-                        dy = -dy;
+                        swap();
                         inner = 1.0;
                     }
                     vec2 norm3 = normalize((norm + norm2) / 2.0);
                     if (vertexNum < 4.5) {
-                        pos = doBisect(norm, len, norm2, len2, dy, 1.0);
-                        dy2 = -abs(dot(pos + dy * norm, norm3));
+                        pos = doBisect(norm, len, norm2, len2, up, 1.0);
+                        dy2 = -abs(dot(pos + up * norm, norm3));
                     } else {
                         dy2 = 0.0;
-                        dy = -dy;
+                        swap();
                         if (vertexNum < 5.5) {
-                            pos = dy * norm;
+                            pos = up * norm;
                         } else {
-                            pos = dy * norm2;
+                            pos = up * norm2;
                         }
                     }
                 }
@@ -358,7 +366,7 @@ void main(void){
         }
 
         pos += base;
-        vDistance = vec4(dy, dy2, dy3, lineWidth) * resolution;
+        vDistance = vec4(up - lineAlignment * lineWidth, dy2, dy3, lineWidth) * resolution;
         vTravel = aTravel * avgScale + dot(pos - pointA, vec2(-norm.y, norm.x));
     }
 
