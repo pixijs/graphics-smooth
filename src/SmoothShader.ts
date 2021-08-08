@@ -175,8 +175,9 @@ void main(void){
         vDistance.xyz *= resolution;
         vType = 2.0;
     } else if (type >= BEVEL) {
-        up = lineWidth * (1.0 + lineAlignment) + expand;
-        down = lineWidth * (-1.0 + lineAlignment) - expand;
+        float lineShift = lineWidth * lineAlignment;
+        up = lineShift + lineWidth + expand;
+        down = lineShift - lineWidth - expand;
         float inner = 0.0;
         if (vertexNum >= 1.5) {
             swap();
@@ -295,7 +296,7 @@ void main(void){
                     inner = 0.0;
                 }
                 if (vertexNum < 4.5) {
-                    pos = doBisect(norm, len, norm2, len2, -down, 1.0);
+                    pos = doBisect(norm, len, norm2, len2, down, 1.0);
                 } else if (vertexNum < 5.5) {
                     pos = up * norm;
                 } else if (vertexNum > 7.5) {
@@ -313,8 +314,14 @@ void main(void){
                         }
                     }
                 }
+                lineWidth = abs(up) - expand;
                 vec2 norm3 = normalize(norm - norm2);
-                up = pos.x * norm3.y - pos.y * norm3.x - 3.0;
+                up = pos.x * norm3.y - pos.y * norm3.x;
+                if (dot(norm, norm3) < 0.0)
+                {
+                    //TODO: find side!
+                    up = -up;
+                }
                 dy2 = pos.x;
                 dy3 = pos.y;
                 vType = 3.0;
@@ -366,7 +373,7 @@ void main(void){
         }
 
         pos += base;
-        vDistance = vec4(up - lineAlignment * lineWidth, dy2, dy3, lineWidth) * resolution;
+        vDistance = vec4(up - lineShift, dy2, dy3, lineWidth) * resolution;
         vTravel = aTravel * avgScale + dot(pos - pointA, vec2(-norm.y, norm.x));
     }
 
@@ -408,10 +415,11 @@ void main(void){
     } else {
         float dist2 = sqrt(dot(vDistance.yz, vDistance.yz));
         float rad = vDistance.w;
-        float left = max(dist2 - 0.5, -rad);
-        float right = min(dist2 + 0.5, rad);
-        // TODO: something has to be done about artifact at vDistance.x far side
-        alpha = 1.0 - step(vDistance.x, 0.0) * (1.0 - max(right - left, 0.0));
+        float inner = max(dist2 - 0.5, -rad);
+        float outer = min(dist2 + 0.5, rad);
+        float left = max(vDistance.x - 0.5, -vDistance.w);
+        float right = min(vDistance.x + 0.5, vDistance.w);
+        alpha = clamp(min(right - left, outer - inner), 0.0, 1.0);
     }
 
     vec4 texColor;
