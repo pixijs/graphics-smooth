@@ -38,8 +38,6 @@ export class CircleBuilder implements IShapeBuilder
             return;
         }
 
-        points.push(x, y);
-
         let totalSegs = Math.floor(30 * Math.sqrt(circleData.radius))
             || Math.floor(15 * Math.sqrt(width + height));
 
@@ -68,8 +66,18 @@ export class CircleBuilder implements IShapeBuilder
         let vertPos = 1;
         const center = 0;
 
+        const circle = graphicsData.shape as Circle;
+        const matrix = graphicsData.matrix;
+        const x = circle.x;
+        const y = circle.y;
+        const cx = matrix ? (matrix.a * x) + (matrix.c * y) + matrix.tx : x;
+        const cy = matrix ? (matrix.b * x) + (matrix.d * y) + matrix.ty : y;
+
         if (!graphicsData.fillAA)
         {
+            verts.push(cx, cy);
+            joints.push(JOINT_TYPE.FILL);
+
             for (let i = 0; i < points.length; i += 2)
             {
                 verts.push(points[i], points[i + 1]);
@@ -84,15 +92,13 @@ export class CircleBuilder implements IShapeBuilder
             return;
         }
 
-        const cx = points[0]; const
-            cy = points[1];
-        const rad = (graphicsData.shape as Circle).radius;
+        const rad = circle.radius;
 
-        for (let i = 2; i < points.length; i += 2)
+        for (let i = 0; i < points.length; i += 2)
         {
             // const prev = i;
             const cur = i;
-            const next = i + 2 < points.length ? i + 2 : 2;
+            const next = i + 2 < points.length ? i + 2 : 0;
 
             verts.push(cx);
             verts.push(cy);
@@ -126,14 +132,14 @@ export class CircleBuilder implements IShapeBuilder
 
         verts.push(points[len - 2], points[len - 1]);
         joints.push(JOINT_TYPE.NONE);
-        for (let i = 2; i < len; i += 2)
+        for (let i = 0; i < len; i += 2)
         {
             verts.push(points[i], points[i + 1]);
             joints.push(joint);
         }
-        verts.push(points[2], points[3]);
+        verts.push(points[0], points[1]);
         joints.push(JOINT_TYPE.NONE);
-        verts.push(points[4], points[5]);
+        verts.push(points[2], points[3]);
         joints.push(JOINT_TYPE.NONE);
     }
 }
