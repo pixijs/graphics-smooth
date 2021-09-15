@@ -21,9 +21,9 @@ import type { IShape, IPointData } from '@pixi/math';
 import type { IDestroyOptions } from '@pixi/display';
 import { IGraphicsBatchSettings } from './core/BatchDrawCall';
 import { FillStyle } from './core/FillStyle';
-import {LINE_SCALE_MODE, LineStyle} from './core/LineStyle';
+import { LINE_SCALE_MODE, LineStyle } from './core/LineStyle';
 import { SmoothGraphicsShader } from './SmoothShader';
-import { settings } from "./settings";
+import { settings } from './settings';
 
 const { BezierUtils, QuadraticUtils, ArcUtils } = graphicsUtils;
 

@@ -31,8 +31,8 @@ uniform mat3 projectionMatrix;
 uniform mat3 translationMatrix;
 uniform vec4 tint;
 
-varying vec4 vSignedCoord;
 varying vec4 vDistance;
+varying vec4 vArc;
 varying float vType;
 
 uniform float resolution;
@@ -84,23 +84,25 @@ void main(void){
     float vertexNum = aVertexJoint - type * 16.0;
     float dx = 0.0, dy = 1.0;
 
-
-    vec2 avgDiag = (translationMatrix * vec3(1.0, 1.0, 0.0)).xy;
-    float avgScale = sqrt(dot(avgDiag, avgDiag) * 0.5);
-
     float capType = floor(type / 32.0);
     type -= capType * 32.0;
+    vArc = vec4(0.0);
 
     int styleId = int(aStyleId + 0.5);
     float lineWidth = styleLine[styleId].x;
-    if (lineWidth < 0.0) {
-        lineWidth = -lineWidth;
-    } else {
-        lineWidth = lineWidth * avgScale;
+    vTextureId = floor(styleTextureId[styleId] / 4.0);
+    float scaleMode = styleTextureId[styleId] - vTextureId * 4.0;
+    float avgScale = 1.0;
+    if (scaleMode > 2.5) {
+        avgScale = length(translationMatrix * vec3(1.0, 0.0, 0.0));
+    } else if (scaleMode > 1.5) {
+        avgScale = length(translationMatrix * vec3(0.0, 1.0, 0.0));
+    } else if (scaleMode > 0.5) {
+        vec2 avgDiag = (translationMatrix * vec3(1.0, 1.0, 0.0)).xy;
+        avgScale = sqrt(dot(avgDiag, avgDiag) * 0.5);
     }
-    lineWidth *= 0.5;
+    lineWidth *= 0.5 * avgScale;
     float lineAlignment = 2.0 * styleLine[styleId].y - 1.0;
-    vTextureId = styleTextureId[styleId];
     vTextureCoord = vec2(0.0);
 
     vec2 pos;
@@ -262,7 +264,7 @@ void main(void){
                 dy = -dy;
                 inner = 0.0;
             }
-            vec2 d2 = abs(dy) * vec2(-norm.y, norm.x);
+            vec2 d2 = abs(dy) * forward;
             if (vertexNum < 4.5) {
                 dy = -dy;
                 pos = dy * norm;
@@ -270,13 +272,16 @@ void main(void){
                 pos = dy * norm;
             } else if (vertexNum < 6.5) {
                 pos = dy * norm + d2;
+                vArc.x = abs(dy);
             } else {
                 dy = -dy;
                 pos = dy * norm + d2;
+                vArc.x = abs(dy);
             }
-            dy = -0.5;
-            dy2 = pos.x;
-            dy3 = pos.y;
+            dy2 = 0.0;
+            vArc.y = dy;
+            vArc.z = 0.0;
+            vArc.w = lineWidth;
             vType = 3.0;
         } else if (abs(D) < 0.01) {
             pos = dy * norm;
@@ -305,10 +310,17 @@ void main(void){
                         }
                     }
                 }
-                vec2 norm3 = normalize(norm - norm2);
-                dy = pos.x * norm3.y - pos.y * norm3.x - 3.0;
-                dy2 = pos.x;
-                dy3 = pos.y;
+                vec2 norm3 = normalize(norm + norm2);
+
+                float sign = step(0.0, dy) * 2.0 - 1.0;
+                vArc.x = sign * dot(pos, norm3);
+                vArc.y = pos.x * norm3.y - pos.y * norm3.x;
+                vArc.z = dot(norm, norm3) * lineWidth;
+                vArc.w = lineWidth;
+
+                dy = -sign * dot(pos, norm);
+                dy2 = -sign * dot(pos, norm2);
+                dy3 = vArc.z - vArc.x;
                 vType = 3.0;
             } else {
                 if (type >= MITER && type < MITER + 3.5) {
@@ -359,6 +371,7 @@ void main(void){
 
         pos += base;
         vDistance = vec4(dy, dy2, dy3, lineWidth) * resolution;
+        vArc = vArc * resolution;
         vTravel = aTravel * avgScale + dot(pos - pointA, vec2(-norm.y, norm.x));
     }
 
@@ -370,6 +383,7 @@ void main(void){
 const smoothFrag = `
 varying vec4 vColor;
 varying vec4 vDistance;
+varying vec4 vArc;
 varying float vType;
 varying float vTextureId;
 varying vec2 vTextureCoord;
@@ -397,13 +411,25 @@ void main(void){
         alpha *= max(min(vDistance.x + 0.5, 1.0), 0.0);
         alpha *= max(min(vDistance.y + 0.5, 1.0), 0.0);
         alpha *= max(min(vDistance.z + 0.5, 1.0), 0.0);
+    } else if (vType < 3.5) {
+        float a1 = clamp(vDistance.x + 0.5 - lineWidth, 0.0, 1.0);
+        float a2 = clamp(vDistance.x + 0.5 + lineWidth, 0.0, 1.0);
+        float b1 = clamp(vDistance.y + 0.5 - lineWidth, 0.0, 1.0);
+        float b2 = clamp(vDistance.y + 0.5 + lineWidth, 0.0, 1.0);
+        float alpha_miter = a2 * b2 - a1 * b1;
+        float alpha_plane = max(min(vDistance.z + 0.5, 1.0), 0.0);
+        float d = length(vArc.xy);
+        float circle_hor = max(min(vArc.w, d + 0.5) - max(-vArc.w, d - 0.5), 0.0);
+        float circle_vert = min(vArc.w * 2.0, 1.0);
+        float alpha_circle = circle_hor * circle_vert;
+        alpha = min(alpha_miter, max(alpha_circle, alpha_plane));
     } else {
-        float dist2 = sqrt(dot(vDistance.yz, vDistance.yz));
-        float rad = vDistance.w;
-        float left = max(dist2 - 0.5, -rad);
-        float right = min(dist2 + 0.5, rad);
-        // TODO: something has to be done about artifact at vDistance.x far side
-        alpha = 1.0 - step(vDistance.x, 0.0) * (1.0 - max(right - left, 0.0));
+        float a1 = clamp(vDistance.x + 0.5 - lineWidth, 0.0, 1.0);
+        float a2 = clamp(vDistance.x + 0.5 + lineWidth, 0.0, 1.0);
+        float b1 = clamp(vDistance.y + 0.5 - lineWidth, 0.0, 1.0);
+        float b2 = clamp(vDistance.y + 0.5 + lineWidth, 0.0, 1.0);
+        alpha = a2 * b2 - a1 * b1;
+        alpha *= max(min(vDistance.z + 0.5, 1.0), 0.0);
     }
 
     vec4 texColor;

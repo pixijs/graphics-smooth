@@ -7,7 +7,7 @@ export class SegmentPacker
 
     strideFloats = 12;
 
-    updateBufferSize(jointStart: number, jointLen: number, triangles: number, target: BuildData)
+    updateBufferSize(jointStart: number, jointLen: number, triangles: number, target: BuildData): void
     {
         const { joints } = target;
         let foundTriangle = false;
@@ -58,7 +58,8 @@ export class SegmentPacker
     indices: Uint16Array;
     buildData: BuildData;
 
-    beginPack(buildData: BuildData, bufFloat: Float32Array, bufUint: Uint32Array, indices: Uint16Array, bufferPos = 0, indexPos = 0)
+    beginPack(buildData: BuildData, bufFloat: Float32Array, bufUint: Uint32Array,
+        indices: Uint16Array, bufferPos = 0, indexPos = 0): void
     {
         this.buildData = buildData;
         this.bufFloat = bufFloat;
@@ -68,7 +69,7 @@ export class SegmentPacker
         this.indexPos = indexPos;
     }
 
-    endPack()
+    endPack(): void
     {
         this.buildData = null;
         this.bufFloat = null;
@@ -77,7 +78,7 @@ export class SegmentPacker
     }
 
     packInterleavedGeometry(jointStart: number, jointLen: number, triangles: number[],
-        lineStyle: number, color: number)
+        lineStyle: number, color: number): void
     {
         const { bufFloat, bufUint, indices, buildData, strideFloats } = this;
         const { joints, verts } = buildData;
@@ -87,8 +88,10 @@ export class SegmentPacker
         let index = this.bufferPos / this.strideFloats;
 
         // eslint-disable-next-line max-len
-        let x1: number; let y1: number; let x2: number; let y2: number; let prevX: number; let prevY: number; let nextX: number; let
-            nextY: number;
+        let x1: number; let y1: number;
+        let x2: number; let y2: number;
+        let prevX: number; let prevY: number;
+        let nextX: number; let nextY: number;
         // let type: number;
         let hasTriangle = false;
 

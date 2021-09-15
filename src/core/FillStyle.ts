@@ -41,10 +41,7 @@ export class FillStyle
         return obj;
     }
 
-    /**
-     * returns width multiplied by scaleMode
-     */
-    packLineWidth(): number
+    packLineScale()
     {
         return 0;
     }

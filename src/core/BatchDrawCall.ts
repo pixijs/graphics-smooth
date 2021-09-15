@@ -45,14 +45,15 @@ export class BatchStyleArray
     }
 
     add(textureId: number, matrix: Matrix,
-        lineWidth: number, lineAlignment: number,
+        lineWidth: number, lineAlignment: number, lineScaleMode: number,
         settings: IGraphicsBatchSettings): number
     {
         const { textureIds, matrices, lines, count } = this;
 
+        textureId = (textureId * 4) + lineScaleMode;
         for (let i = 0; i < count; i++)
         {
-            if (lines[i * 2] === lineWidth && lines[i * 2 + 1] === lineAlignment
+            if (lines[i * 2] === lineWidth && lines[(i * 2) + 1] === lineAlignment
                 && textureIds[i] === textureId && (matrixEquals(matrices[i], matrix)))
             {
                 return i;
@@ -65,7 +66,7 @@ export class BatchStyleArray
         textureIds[count] = textureId;
         matrices[count] = matrix;
         lines[count * 2] = lineWidth;
-        lines[count * 2 + 1] = lineAlignment;
+        lines[(count * 2) + 1] = lineAlignment;
         this.count++;
 
         return count;
@@ -138,7 +139,8 @@ export class BatchDrawCall
         return (this.shader === shader);
     }
 
-    add(texture: Texture, matrix: Matrix, lineWidth: number, lineAlignment: number): number
+    add(texture: Texture, matrix: Matrix, lineWidth: number,
+        lineAlignment: number, lineScaleMode: number): number
     {
         const { texArray, TICK, styleArray, settings } = this;
         const { baseTexture } = texture;
@@ -151,7 +153,8 @@ export class BatchDrawCall
         const loc = baseTexture._batchEnabled !== TICK ? texArray.count : baseTexture._batchLocation;
         // check and add style
         // add1 -> add2 only works in chain, not when there are several adds inside
-        const res = styleArray.add(loc, matrix || Matrix.IDENTITY, lineWidth, lineAlignment, settings);
+        const res = styleArray.add(loc, matrix || Matrix.IDENTITY,
+            lineWidth, lineAlignment, lineScaleMode, settings);
 
         if (res >= 0)
         {

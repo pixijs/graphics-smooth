@@ -4,6 +4,8 @@ import { FillStyle } from './FillStyle';
 export enum LINE_SCALE_MODE {
     NONE = 'none',
     NORMAL = 'normal',
+    HORIZONTAL = 'horizontal',
+    VERTICAL = 'vertical',
 }
 
 export class LineStyle extends FillStyle
@@ -43,9 +45,15 @@ export class LineStyle extends FillStyle
     /**
      * returns width multiplied by scaleMode
      */
-    packLineWidth(): number
+    packLineScale(): number
     {
-        return this.scaleMode === LINE_SCALE_MODE.NORMAL ? this.width : -this.width;
+        switch (this.scaleMode)
+        {
+            case LINE_SCALE_MODE.NORMAL: return 1;
+            case LINE_SCALE_MODE.HORIZONTAL: return 2;
+            case LINE_SCALE_MODE.VERTICAL: return 3;
+            default: return 0;
+        }
     }
 
     reset(): void

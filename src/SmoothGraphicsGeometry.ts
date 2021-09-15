@@ -610,13 +610,15 @@ export class SmoothGraphicsGeometry extends Geometry
         {
             return false;
         }
-
-        if (styleA.packLineWidth() !== styleB.packLineWidth())
+        // TODO: propagate width for FillStyle
+        if ((styleA as LineStyle).width !== (styleB as LineStyle).width)
         {
             return false;
         }
-
-        // TODO: propagate width for FillStyle
+        if ((styleA as LineStyle).scaleMode !== (styleB as LineStyle).scaleMode)
+        {
+            return false;
+        }
         if ((styleA as LineStyle).alignment !== (styleB as LineStyle).alignment)
         {
             return false;
@@ -735,7 +737,8 @@ export class SmoothGraphicsGeometry extends Geometry
 
             if (currentGroup.check(style.shader))
             {
-                styleId = currentGroup.add(style.texture, mat, style.packLineWidth(), style.alignment || 0);
+                styleId = currentGroup.add(style.texture, mat,
+                    style.width, style.alignment || 0, style.packLineScale());
             }
             if (styleId < 0)
             {
@@ -743,7 +746,8 @@ export class SmoothGraphicsGeometry extends Geometry
                 this.drawCalls.push(currentGroup);
                 currentGroup.begin(shaderSettings, style.shader);
                 currentGroup.start = index;
-                styleId = currentGroup.add(style.texture, mat, style.packLineWidth(), style.alignment || 0);
+                styleId = currentGroup.add(style.texture, mat,
+                    style.width, style.alignment || 0, style.packLineScale());
             }
             currentGroup.size += batchData.size;
             index += batchData.size;

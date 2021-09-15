@@ -3,6 +3,7 @@ import { SmoothGraphicsProgram, SmoothGraphicsShader } from './SmoothShader';
 const dashFrag = `
 varying vec4 vColor;
 varying vec4 vDistance;
+varying vec4 vArc;
 varying float vType;
 varying float vTextureId;
 varying vec2 vTextureCoord;
@@ -32,13 +33,25 @@ void main(void){
         alpha *= max(min(vDistance.x + 0.5, 1.0), 0.0);
         alpha *= max(min(vDistance.y + 0.5, 1.0), 0.0);
         alpha *= max(min(vDistance.z + 0.5, 1.0), 0.0);
+    } else if (vType < 3.5) {
+        float a1 = clamp(vDistance.x + 0.5 - lineWidth, 0.0, 1.0);
+        float a2 = clamp(vDistance.x + 0.5 + lineWidth, 0.0, 1.0);
+        float b1 = clamp(vDistance.y + 0.5 - lineWidth, 0.0, 1.0);
+        float b2 = clamp(vDistance.y + 0.5 + lineWidth, 0.0, 1.0);
+        float alpha_miter = a2 * b2 - a1 * b1;
+        float alpha_plane = max(min(vDistance.z + 0.5, 1.0), 0.0);
+        float d = length(vArc.xy);
+        float circle_hor = max(min(vArc.w, d + 0.5) - max(-vArc.w, d - 0.5), 0.0);
+        float circle_vert = min(vArc.w * 2.0, 1.0);
+        float alpha_circle = circle_hor * circle_vert;
+        alpha = min(alpha_miter, max(alpha_circle, alpha_plane));
     } else {
-        float dist2 = sqrt(dot(vDistance.yz, vDistance.yz));
-        float rad = vDistance.w;
-        float left = max(dist2 - 0.5, -rad);
-        float right = min(dist2 + 0.5, rad);
-        // TODO: something has to be done about artifact at vDistance.x far side
-        alpha = 1.0 - step(vDistance.x, 0.0) * (1.0 - max(right - left, 0.0));
+        float a1 = clamp(vDistance.x + 0.5 - lineWidth, 0.0, 1.0);
+        float a2 = clamp(vDistance.x + 0.5 + lineWidth, 0.0, 1.0);
+        float b1 = clamp(vDistance.y + 0.5 - lineWidth, 0.0, 1.0);
+        float b2 = clamp(vDistance.y + 0.5 + lineWidth, 0.0, 1.0);
+        alpha = a2 * b2 - a1 * b1;
+        alpha *= max(min(vDistance.z + 0.5, 1.0), 0.0);
     }
 
     if (dash + gap > 1.0)
