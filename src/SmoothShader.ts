@@ -111,6 +111,7 @@ void main(void){
         vertexNum += 4.0;
         type = JOINT_CAP_ROUND;
         capType = 0.0;
+        lineAlignment = -lineAlignment;
     }
 
     if (type == FILL) {
@@ -171,6 +172,7 @@ void main(void){
         vType = 2.0;
     } else if (type >= BEVEL) {
         float dy = lineWidth + expand;
+        float shift = lineWidth * lineAlignment;
         float inner = 0.0;
         if (vertexNum >= 1.5) {
             dy = -dy;
@@ -203,17 +205,6 @@ void main(void){
 
         norm2 *= sign2;
 
-        if (abs(lineAlignment) > 0.01) {
-            float shift = lineWidth * lineAlignment;
-            pointA += norm * shift;
-            pointB += norm * shift;
-            if (abs(D) < 0.01) {
-                base += norm * shift;
-            } else {
-                base += doBisect(norm, len, norm2, len2, shift, 0.0);
-            }
-        }
-
         float collinear = step(0.0, dot(norm, norm2));
 
         vType = 0.0;
@@ -229,12 +220,12 @@ void main(void){
 
         if (vertexNum < 3.5) {
             if (abs(D) < 0.01) {
-                pos = dy * norm;
+                pos = (shift + dy) * norm;
             } else {
                 if (flag < 0.5 && inner < 0.5) {
-                    pos = dy * norm;
+                    pos = (shift + dy) * norm;
                 } else {
-                    pos = doBisect(norm, len, norm2, len2, dy, inner);
+                    pos = doBisect(norm, len, norm2, len2, shift + dy, inner);
                 }
             }
             if (capType >= CAP_BUTT && capType < CAP_ROUND) {
@@ -260,6 +251,7 @@ void main(void){
                 }
             }
         } else if (type >= JOINT_CAP_ROUND && type < JOINT_CAP_ROUND + 1.5) {
+            base += shift * norm;
             if (inner > 0.5) {
                 dy = -dy;
                 inner = 0.0;
@@ -292,21 +284,21 @@ void main(void){
                     inner = 0.0;
                 }
                 if (vertexNum < 4.5) {
-                    pos = doBisect(norm, len, norm2, len2, -dy, 1.0);
+                    pos = doBisect(norm, len, norm2, len2, shift - dy, 1.0);
                 } else if (vertexNum < 5.5) {
-                    pos = dy * norm;
+                    pos = (shift + dy) * norm;
                 } else if (vertexNum > 7.5) {
-                    pos = dy * norm2;
+                    pos = (shift + dy) * norm2;
                 } else {
-                    pos = doBisect(norm, len, norm2, len2, dy, 0.0);
-                    float d2 = abs(dy);
-                    if (length(pos) > abs(dy) * 1.5) {
+                    pos = doBisect(norm, len, norm2, len2, shift + dy, 0.0);
+                    float d2 = abs(shift + dy);
+                    if (length(pos) > abs(shift + dy) * 1.5) {
                         if (vertexNum < 6.5) {
-                            pos.x = dy * norm.x - d2 * norm.y;
-                            pos.y = dy * norm.y + d2 * norm.x;
+                            pos.x = (shift + dy) * norm.x - d2 * norm.y;
+                            pos.y = (shift + dy) * norm.y + d2 * norm.x;
                         } else {
-                            pos.x = dy * norm2.x + d2 * norm2.y;
-                            pos.y = dy * norm2.y - d2 * norm2.x;
+                            pos.x = (shift + dy) * norm2.x + d2 * norm2.y;
+                            pos.y = (shift + dy) * norm2.y - d2 * norm2.x;
                         }
                     }
                 }
@@ -315,11 +307,11 @@ void main(void){
                 float sign = step(0.0, dy) * 2.0 - 1.0;
                 vArc.x = sign * dot(pos, norm3);
                 vArc.y = pos.x * norm3.y - pos.y * norm3.x;
-                vArc.z = dot(norm, norm3) * lineWidth;
-                vArc.w = lineWidth;
+                vArc.z = dot(norm, norm3) * (lineWidth - shift);
+                vArc.w = lineWidth + sign * shift;
 
-                dy = -sign * dot(pos, norm);
-                dy2 = -sign * dot(pos, norm2);
+                dy = dot(pos, norm) - shift;
+                dy2 = dot(pos, norm2) - shift;
                 dy3 = vArc.z - vArc.x;
                 vType = 3.0;
             } else {
@@ -329,23 +321,23 @@ void main(void){
                         inner = 0.0;
                     }
                     float sign = step(0.0, dy) * 2.0 - 1.0;
-                    pos = doBisect(norm, len, norm2, len2, dy, 0.0);
-                    if (length(pos) > abs(dy) * MITER_LIMIT) {
+                    pos = doBisect(norm, len, norm2, len2, shift + dy, 0.0);
+                    if (length(pos) > abs(shift + dy) * MITER_LIMIT) {
                         type = BEVEL;
                     } else {
                         if (vertexNum < 4.5) {
                             dy = -dy;
-                            pos = doBisect(norm, len, norm2, len2, dy, 1.0);
+                            pos = doBisect(norm, len, norm2, len2, shift + dy, 1.0);
                         } else if (vertexNum < 5.5) {
-                            pos = dy * norm;
+                            pos = (shift + dy) * norm;
                         } else if (vertexNum > 6.5) {
-                            pos = dy * norm2;
+                            pos = (shift + dy) * norm2;
                             // dy = ...
                         }
                     }
                     vType = 1.0;
-                    dy = -sign * dot(pos, norm);
-                    dy2 = -sign * dot(pos, norm2);
+                    dy = -sign * (dot(pos, norm) - shift);
+                    dy2 = -sign * (dot(pos, norm2) - shift);
                 }
                 if (type >= BEVEL && type < BEVEL + 1.5) {
                     if (inner < 0.5) {
@@ -354,15 +346,15 @@ void main(void){
                     }
                     vec2 norm3 = normalize((norm + norm2) / 2.0);
                     if (vertexNum < 4.5) {
-                        pos = doBisect(norm, len, norm2, len2, dy, 1.0);
-                        dy2 = -abs(dot(pos + dy * norm, norm3));
+                        pos = doBisect(norm, len, norm2, len2, shift + dy, 1.0);
+                        dy2 = -abs(dot(pos - (shift - dy) * norm, norm3));
                     } else {
                         dy2 = 0.0;
                         dy = -dy;
                         if (vertexNum < 5.5) {
-                            pos = dy * norm;
+                            pos = (shift + dy) * norm;
                         } else {
-                            pos = dy * norm2;
+                            pos = (shift + dy) * norm2;
                         }
                     }
                 }
