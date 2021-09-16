@@ -1,7 +1,8 @@
 import { Program, Shader } from '@pixi/core';
 import { IGraphicsBatchSettings } from './core/BatchDrawCall';
 
-const smoothVert = `precision highp float;
+const smoothVert = `#version 100
+precision highp float;
 const float FILL = 1.0;
 const float BEVEL = 4.0;
 const float MITER = 8.0;
@@ -307,11 +308,11 @@ void main(void){
                 float sign = step(0.0, dy) * 2.0 - 1.0;
                 vArc.x = sign * dot(pos, norm3);
                 vArc.y = pos.x * norm3.y - pos.y * norm3.x;
-                vArc.z = dot(norm, norm3) * (lineWidth - shift);
+                vArc.z = sign * dot(norm, norm3) * (lineWidth + sign * shift);
                 vArc.w = lineWidth + sign * shift;
 
-                dy = dot(pos, norm) - shift;
-                dy2 = dot(pos, norm2) - shift;
+                dy = -sign * (dot(pos, norm) - shift);
+                dy2 = -sign * (dot(pos, norm2) - shift);
                 dy3 = vArc.z - vArc.x;
                 vType = 3.0;
             } else {
@@ -372,7 +373,12 @@ void main(void){
     vColor = aColor * tint;
 }`;
 
-const smoothFrag = `
+const smoothFrag = `#version 100
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+  precision highp float;
+#else
+  precision mediump float;
+#endif
 varying vec4 vColor;
 varying vec4 vDistance;
 varying vec4 vArc;
@@ -382,46 +388,52 @@ varying vec2 vTextureCoord;
 varying float vTravel;
 uniform sampler2D uSamplers[%MAX_TEXTURES%];
 
+const float w2 = 0.5;
+const float w1 = w2 * 2.0;
+
 void main(void){
     float alpha = 1.0;
     float lineWidth = vDistance.w;
     if (vType < 0.5) {
-        float left = max(vDistance.x - 0.5, -vDistance.w);
-        float right = min(vDistance.x + 0.5, vDistance.w);
-        float near = vDistance.y - 0.5;
-        float far = min(vDistance.y + 0.5, 0.0);
-        float top = vDistance.z - 0.5;
-        float bottom = min(vDistance.z + 0.5, 0.0);
+        float left = max(vDistance.x - w2, -vDistance.w);
+        float right = min(vDistance.x + w2, vDistance.w);
+        float near = vDistance.y - w2;
+        float far = min(vDistance.y + w2, 0.0);
+        float top = vDistance.z - w2;
+        float bottom = min(vDistance.z + w2, 0.0);
         alpha = max(right - left, 0.0) * max(bottom - top, 0.0) * max(far - near, 0.0);
+        alpha /= w1 * w1 * w1;
     } else if (vType < 1.5) {
-        float a1 = clamp(vDistance.x + 0.5 - lineWidth, 0.0, 1.0);
-        float a2 = clamp(vDistance.x + 0.5 + lineWidth, 0.0, 1.0);
-        float b1 = clamp(vDistance.y + 0.5 - lineWidth, 0.0, 1.0);
-        float b2 = clamp(vDistance.y + 0.5 + lineWidth, 0.0, 1.0);
+        float a1 = clamp(vDistance.x + w2 - lineWidth, 0.0, w1);
+        float a2 = clamp(vDistance.x + w2 + lineWidth, 0.0, w1);
+        float b1 = clamp(vDistance.y + w2 - lineWidth, 0.0, w1);
+        float b2 = clamp(vDistance.y + w2 + lineWidth, 0.0, w1);
         alpha = a2 * b2 - a1 * b1;
     } else if (vType < 2.5) {
         alpha *= max(min(vDistance.x + 0.5, 1.0), 0.0);
         alpha *= max(min(vDistance.y + 0.5, 1.0), 0.0);
         alpha *= max(min(vDistance.z + 0.5, 1.0), 0.0);
     } else if (vType < 3.5) {
-        float a1 = clamp(vDistance.x + 0.5 - lineWidth, 0.0, 1.0);
-        float a2 = clamp(vDistance.x + 0.5 + lineWidth, 0.0, 1.0);
-        float b1 = clamp(vDistance.y + 0.5 - lineWidth, 0.0, 1.0);
-        float b2 = clamp(vDistance.y + 0.5 + lineWidth, 0.0, 1.0);
+        float a1 = clamp(vDistance.x + w2 - lineWidth, 0.0, w1);
+        float a2 = clamp(vDistance.x + w2 + lineWidth, 0.0, w1);
+        float b1 = clamp(vDistance.y + w2 - lineWidth, 0.0, w1);
+        float b2 = clamp(vDistance.y + w2 + lineWidth, 0.0, w1);
         float alpha_miter = a2 * b2 - a1 * b1;
-        float alpha_plane = max(min(vDistance.z + 0.5, 1.0), 0.0);
+        float alpha_plane = max(min(vDistance.z + w2, 1.0), 0.0) * w1;
         float d = length(vArc.xy);
-        float circle_hor = max(min(vArc.w, d + 0.5) - max(-vArc.w, d - 0.5), 0.0);
+        float circle_hor = max(min(vArc.w, d + w2) - max(-vArc.w, d - w2), 0.0);
         float circle_vert = min(vArc.w * 2.0, 1.0);
         float alpha_circle = circle_hor * circle_vert;
         alpha = min(alpha_miter, max(alpha_circle, alpha_plane));
+        alpha /= w1 * w1;
     } else {
-        float a1 = clamp(vDistance.x + 0.5 - lineWidth, 0.0, 1.0);
-        float a2 = clamp(vDistance.x + 0.5 + lineWidth, 0.0, 1.0);
-        float b1 = clamp(vDistance.y + 0.5 - lineWidth, 0.0, 1.0);
-        float b2 = clamp(vDistance.y + 0.5 + lineWidth, 0.0, 1.0);
+        float a1 = clamp(vDistance.x + w2 - lineWidth, 0.0, w1);
+        float a2 = clamp(vDistance.x + w2 + lineWidth, 0.0, w1);
+        float b1 = clamp(vDistance.y + w2 - lineWidth, 0.0, w1);
+        float b2 = clamp(vDistance.y + w2 + lineWidth, 0.0, w1);
         alpha = a2 * b2 - a1 * b1;
-        alpha *= max(min(vDistance.z + 0.5, 1.0), 0.0);
+        alpha *= max(min(vDistance.z + w2, 1.0), 0.0);
+        alpha /= w1 * w1;
     }
 
     vec4 texColor;
