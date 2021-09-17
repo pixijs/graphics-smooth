@@ -341,23 +341,26 @@ void main(void){
                     dy2 = -sign * (dot(pos, norm2) - shift);
                 }
                 if (type >= BEVEL && type < BEVEL + 1.5) {
-                    if (inner < 0.5) {
+                    if (inner > 0.5) {
                         dy = -dy;
-                        inner = 1.0;
+                        inner = 0.0;
                     }
+                    float sign = (step(0.0, dy) * 2.0 - 1.0);
                     vec2 norm3 = normalize((norm + norm2) / 2.0);
                     if (vertexNum < 4.5) {
-                        pos = doBisect(norm, len, norm2, len2, shift + dy, 1.0);
-                        dy2 = -abs(dot(pos - (shift - dy) * norm, norm3));
-                    } else {
-                        dy2 = 0.0;
                         dy = -dy;
+                        pos = doBisect(norm, len, norm2, len2, shift + dy, 1.0);
+                    } else {
                         if (vertexNum < 5.5) {
-                            pos = (shift + dy) * norm;
+                            pos = (shift + dy) * norm + sign * norm3 * expand;
                         } else {
-                            pos = (shift + dy) * norm2;
+                            pos = (shift + dy) * norm2 + sign * norm3 * expand;
                         }
                     }
+                    vType = 4.0;
+                    dy = -sign * (dot(pos, norm) - shift);
+                    dy2 = -sign * (dot(pos, norm2) - shift);
+                    dy3 = sign * (dot(norm, norm3) * (lineWidth + sign * shift) - dot(pos, norm3));
                 }
             }
         }
@@ -425,6 +428,7 @@ void main(void){
         float circle_vert = min(vArc.w * 2.0, w1);
         float alpha_circle = circle_hor * circle_vert;
         alpha = min(alpha_miter, max(alpha_circle, alpha_plane));
+        // alpha = min(alpha_miter, alpha_plane);
         alpha /= w1 * w1;
     } else {
         float a1 = clamp(vDistance.x + w2 - lineWidth, 0.0, w1);
