@@ -422,7 +422,7 @@ void main(void){
         float alpha_plane = max(min(vDistance.z + w2, 1.0), 0.0) * w1;
         float d = length(vArc.xy);
         float circle_hor = max(min(vArc.w, d + w2) - max(-vArc.w, d - w2), 0.0);
-        float circle_vert = min(vArc.w * 2.0, 1.0);
+        float circle_vert = min(vArc.w * 2.0, w1);
         float alpha_circle = circle_hor * circle_vert;
         alpha = min(alpha_miter, max(alpha_circle, alpha_plane));
         alpha /= w1 * w1;

@@ -17,7 +17,9 @@ const renderer2 = new PIXI.CanvasRenderer({
 document.body.appendChild(app.view);
 document.body.appendChild(renderer2.view);
 app.view.style['image-rendering'] = 'pixelated'
+app.view.style.display = 'block';
 renderer2.view.style['image-rendering'] = 'pixelated'
+renderer2.view.style.display = 'block';
 
 
 try
