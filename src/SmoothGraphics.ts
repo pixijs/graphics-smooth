@@ -43,7 +43,7 @@ export interface IFillStyleOptions {
 export interface ILineStyleOptions extends IFillStyleOptions {
     width?: number;
     alignment?: number;
-    scaleMode: LINE_SCALE_MODE;
+    scaleMode?: LINE_SCALE_MODE;
     cap?: LINE_CAP;
     join?: LINE_JOIN;
     miterLimit?: number;
