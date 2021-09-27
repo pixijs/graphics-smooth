@@ -311,7 +311,7 @@ void main(void){
                 float sign = step(0.0, dy) * 2.0 - 1.0;
                 vArc.x = sign * dot(pos, norm3);
                 vArc.y = pos.x * norm3.y - pos.y * norm3.x;
-                vArc.z = sign * dot(norm, norm3) * (lineWidth + sign * shift);
+                vArc.z = dot(norm, norm3) * (lineWidth + sign * shift);
                 vArc.w = lineWidth + sign * shift;
 
                 dy = sign * (dot(pos, norm) - shift);
@@ -355,15 +355,17 @@ void main(void){
                         pos = doBisect(norm, len, norm2, len2, shift + dy, 1.0);
                     } else {
                         if (vertexNum < 5.5) {
-                            pos = (shift + dy) * norm + sign * norm3 * expand;
+                            pos = (shift + dy) * norm;// + sign * norm3 * expand;
                         } else {
-                            pos = (shift + dy) * norm2 + sign * norm3 * expand;
+                            pos = (shift + dy) * norm2;// + sign * norm3 * expand;
                         }
                     }
                     vType = 4.0;
                     dy = sign * (dot(pos, norm) - shift);
                     dy2 = sign * (dot(pos, norm2) - shift);
-                    vArc.z = sign * (dot(norm, norm3) * (lineWidth + sign * shift) - dot(pos, norm3));
+                    // vArc.x = sign * dot(pos, norm3);
+                    // vArc.z = sign * dot(norm, norm3) * (lineWidth + sign * shift);
+                    vArc.z = dot(norm, norm3) * (lineWidth + sign * shift) - sign * dot(pos, norm3);
                 }
             }
         }
