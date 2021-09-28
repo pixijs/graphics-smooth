@@ -274,7 +274,7 @@ void main(void){
                 pos = dy * norm + d2;
                 vArc.x = abs(dy);
             }
-            dy2 = 0.0; vLine2.y = lineWidth * 100.0; // forget about line2 with type=3
+            vLine2 = vec4(0.0, lineWidth * 2.0 + 10.0, 1.0, 0.0); // forget about line2 with type=3
             vArc.y = dy;
             vArc.z = 0.0;
             vArc.w = lineWidth;
@@ -316,7 +316,6 @@ void main(void){
 
                 dy = sign * (dot(pos, norm) - shift);
                 dy2 = sign * (dot(pos, norm2) - shift);
-                // dy3 = vArc.z - vArc.x;
                 vType = 3.0;
             } else {
                 if (type >= MITER && type < MITER + 3.5) {
@@ -368,8 +367,6 @@ void main(void){
                     vType = 4.0;
                     dy = sign * (dot(pos, norm) - shift);
                     dy2 = sign * (dot(pos, norm2) - shift);
-                    // vArc.x = sign * dot(pos, norm3);
-                    // vArc.z = sign * dot(norm, norm3) * (lineWidth + sign * shift);
                     vArc.z = dot(norm, norm3) * (lineWidth + sign * shift) - sign * dot(pos, norm3);
                 }
             }
@@ -405,6 +402,7 @@ uniform sampler2D uSamplers[%MAX_TEXTURES%];
 
 float pixelLine(float x, float A, float B) {
     float y = abs(x), s = sign(x);
+
     if (y * 2.0 < A - B) {
         return 0.5 + s * y / A;
     } else {
@@ -448,7 +446,6 @@ void main(void){
         float circle_vert = min(vArc.w * 2.0, 1.0);
         float alpha_circle = circle_hor * circle_vert;
         alpha = min(alpha_miter, max(alpha_circle, alpha_plane));
-        // alpha = min(alpha_miter, alpha_plane);
     } else {
         float a1 = pixelLine(- vLine1.y - vLine1.x, vLine1.z, vLine1.w);
         float a2 = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
