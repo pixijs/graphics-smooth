@@ -402,15 +402,11 @@ uniform sampler2D uSamplers[%MAX_TEXTURES%];
 
 float pixelLine(float x, float A, float B) {
     float y = abs(x), s = sign(x);
-
     if (y * 2.0 < A - B) {
         return 0.5 + s * y / A;
     } else {
         return 0.5 + s * min((y * 0.5 - B * 0.25) / A + 0.25, 0.5);
-
-        // return 0.5 + s * max(((y - (A-B) * 0.5) * 0.5 + (A - B) * 0.5) / A, 0.5);
     }
-
     //return clamp(x + 0.5, 0.0, 1.0);
 }
 
