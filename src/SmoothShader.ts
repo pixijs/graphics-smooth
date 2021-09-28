@@ -350,14 +350,19 @@ void main(void){
                     }
                     float sign = (step(0.0, dy) * 2.0 - 1.0);
                     vec2 norm3 = normalize((norm + norm2) / 2.0);
+
                     if (vertexNum < 4.5) {
-                        dy = -dy;
-                        pos = doBisect(norm, len, norm2, len2, shift + dy, 1.0);
+                        pos = doBisect(norm, len, norm2, len2, shift - dy, 1.0);
+                    } else if (vertexNum < 5.5) {
+                        pos = (shift + dy) * norm;
+                    } else if (vertexNum > 7.5) {
+                        pos = (shift + dy) * norm2;
                     } else {
-                        if (vertexNum < 5.5) {
-                            pos = (shift + dy) * norm;// + sign * norm3 * expand;
+                        float d2 = sign / resolution;
+                        if (vertexNum < 6.5) {
+                            pos = (shift + dy) * norm + d2 * norm3;
                         } else {
-                            pos = (shift + dy) * norm2;// + sign * norm3 * expand;
+                            pos = (shift + dy) * norm2 + d2 * norm3;
                         }
                     }
                     vType = 4.0;

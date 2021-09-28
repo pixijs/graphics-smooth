@@ -258,10 +258,10 @@ for (let i = 0; i < 8; i++)
 }
 
 // no caps for now
-verts[JOINT_TYPE.JOINT_BEVEL] = 4 + 3;
-verts[JOINT_TYPE.JOINT_BEVEL + 1] = 4 + 3;
-verts[JOINT_TYPE.JOINT_BEVEL + 2] = 4 + 3;
-verts[JOINT_TYPE.JOINT_BEVEL + 3] = 4 + 3;
+verts[JOINT_TYPE.JOINT_BEVEL] = 4 + 5;
+verts[JOINT_TYPE.JOINT_BEVEL + 1] = 4 + 5;
+verts[JOINT_TYPE.JOINT_BEVEL + 2] = 4 + 5;
+verts[JOINT_TYPE.JOINT_BEVEL + 3] = 4 + 5;
 verts[JOINT_TYPE.JOINT_ROUND] = 4 + 5;
 verts[JOINT_TYPE.JOINT_ROUND + 1] = 4 + 5;
 verts[JOINT_TYPE.JOINT_ROUND + 2] = 4 + 5;
