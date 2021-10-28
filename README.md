@@ -58,6 +58,32 @@ graphics.beginFill(0xffffff, 1.0, true); //third param for beginFill
 
 HHAA doesn't work with texture fill yet.
 
+### drawStar and other graphics-extras
+
+That's what you have to do if you need functions from graphics-extras package: 
+
+```js
+import { SmoothGraphics } from '@pixi/graphics-smooth';
+import { Graphics } from '@pixi/graphics';
+import '@pixi/graphics-extras';
+
+Object.assign(SmoothGraphics.prototype, {
+    drawTorus: Graphics.prototype.drawTorus,
+    drawChamferRect: Graphics.prototype.drawChamferRect,
+    drawFilletRect: Graphics.prototype.drawFilletRect,
+    drawRegularPolygon: Graphics.prototype.drawRegularPolygon,
+    drawRoundedPolygon: Graphics.prototype.drawRoundedPolygon,
+    drawStar: Graphics.prototype.drawStar,
+});
+```
+
+For UMD:
+
+```js
+PIXI.smooth.SmoothGraphics.prototype.drawStar = PIXI.Graphics.prototype.drawStar;
+```
+
+
 ### What are we working on
 
 * better AA on fills

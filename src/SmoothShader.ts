@@ -121,7 +121,7 @@ void main(void){
     if (type == FILL) {
         pos = pointA;
         vType = 0.0;
-
+        vLine2 = vec4(-2.0, -2.0, -2.0, 0.0);
         vec2 vTexturePixel;
         vTexturePixel.x = dot(vec3(aPoint1, 1.0), styleMatrix[styleId * 2]);
         vTexturePixel.y = dot(vec3(aPoint1, 1.0), styleMatrix[styleId * 2 + 1]);
@@ -356,12 +356,15 @@ void main(void){
     vColor = aColor * tint;
 }`;
 
-const smoothFrag = `#version 100
+const precision = `#version 100
 #ifdef GL_FRAGMENT_PRECISION_HIGH
   precision highp float;
 #else
   precision mediump float;
 #endif
+`;
+
+const smoothFrag = `%PRECISION%
 varying vec4 vColor;
 varying vec4 vLine1;
 varying vec4 vLine2;
@@ -372,6 +375,24 @@ varying vec2 vTextureCoord;
 varying float vTravel;
 uniform sampler2D uSamplers[%MAX_TEXTURES%];
 
+%PIXEL_LINE%
+
+void main(void){
+    %PIXEL_COVERAGE%
+
+    vec4 texColor;
+    float textureId = floor(vTextureId+0.5);
+    %FOR_LOOP%
+
+    gl_FragColor = vColor * texColor * alpha;
+}
+`;
+
+const pixelLineFunc = [`
+float pixelLine(float x, float A, float B) {
+    return clamp(x + 0.5, 0.0, 1.0);
+}
+`, `
 float pixelLine(float x, float A, float B) {
     float y = abs(x), s = sign(x);
     if (y * 2.0 < A - B) {
@@ -382,53 +403,46 @@ float pixelLine(float x, float A, float B) {
     return (1.0 + s * (1.0 - y * y)) * 0.5;
     //return clamp(x + 0.5, 0.0, 1.0);
 }
+`];
 
-void main(void){
-    float alpha = 1.0;
-    if (vType < 0.5) {
-        float left = pixelLine(-vLine1.y - vLine1.x, vLine1.z, vLine1.w);
-        float right = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
-        float near = vLine2.x - 0.5;
-        float far = min(vLine2.x + 0.5, 0.0);
-        float top = vLine2.y - 0.5;
-        float bottom = min(vLine2.y + 0.5, 0.0);
-        alpha = (right - left) * max(bottom - top, 0.0) * max(far - near, 0.0);
-    } else if (vType < 1.5) {
-        float a1 = pixelLine(- vLine1.y - vLine1.x, vLine1.z, vLine1.w);
-        float a2 = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
-        float b1 = pixelLine(- vLine2.y - vLine2.x, vLine2.z, vLine2.w);
-        float b2 = pixelLine(vLine2.y - vLine2.x, vLine2.z, vLine2.w);
-        alpha = a2 * b2 - a1 * b1;
-    } else if (vType < 2.5) {
-        alpha *= max(min(vLine1.x + 0.5, 1.0), 0.0);
-        alpha *= max(min(vLine1.y + 0.5, 1.0), 0.0);
-        alpha *= max(min(vLine1.z + 0.5, 1.0), 0.0);
-    } else if (vType < 3.5) {
-        float a1 = pixelLine(- vLine1.y - vLine1.x, vLine1.z, vLine1.w);
-        float a2 = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
-        float b1 = pixelLine(- vLine2.y - vLine2.x, vLine2.z, vLine2.w);
-        float b2 = pixelLine(vLine2.y - vLine2.x, vLine2.z, vLine2.w);
-        float alpha_miter = a2 * b2 - a1 * b1;
-        float alpha_plane = clamp(vArc.z - vArc.x + 0.5, 0.0, 1.0);
-        float d = length(vArc.xy);
-        float circle_hor = max(min(vArc.w, d + 0.5) - max(-vArc.w, d - 0.5), 0.0);
-        float circle_vert = min(vArc.w * 2.0, 1.0);
-        float alpha_circle = circle_hor * circle_vert;
-        alpha = min(alpha_miter, max(alpha_circle, alpha_plane));
-    } else {
-        float a1 = pixelLine(- vLine1.y - vLine1.x, vLine1.z, vLine1.w);
-        float a2 = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
-        float b1 = pixelLine(- vLine2.y - vLine2.x, vLine2.z, vLine2.w);
-        float b2 = pixelLine(vLine2.y - vLine2.x, vLine2.z, vLine2.w);
-        alpha = a2 * b2 - a1 * b1;
-        alpha *= clamp(vArc.z + 0.5, 0.0, 1.0);
-    }
-
-    vec4 texColor;
-    float textureId = floor(vTextureId+0.5);
-    %FOR_LOOP%
-
-    gl_FragColor = vColor * texColor * alpha;
+const pixelCoverage = `float alpha = 1.0;
+if (vType < 0.5) {
+    float left = pixelLine(-vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float right = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float near = vLine2.x - 0.5;
+    float far = min(vLine2.x + 0.5, 0.0);
+    float top = vLine2.y - 0.5;
+    float bottom = min(vLine2.y + 0.5, 0.0);
+    alpha = (right - left) * max(bottom - top, 0.0) * max(far - near, 0.0);
+} else if (vType < 1.5) {
+    float a1 = pixelLine(- vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float a2 = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float b1 = pixelLine(- vLine2.y - vLine2.x, vLine2.z, vLine2.w);
+    float b2 = pixelLine(vLine2.y - vLine2.x, vLine2.z, vLine2.w);
+    alpha = a2 * b2 - a1 * b1;
+} else if (vType < 2.5) {
+    alpha *= max(min(vLine1.x + 0.5, 1.0), 0.0);
+    alpha *= max(min(vLine1.y + 0.5, 1.0), 0.0);
+    alpha *= max(min(vLine1.z + 0.5, 1.0), 0.0);
+} else if (vType < 3.5) {
+    float a1 = pixelLine(- vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float a2 = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float b1 = pixelLine(- vLine2.y - vLine2.x, vLine2.z, vLine2.w);
+    float b2 = pixelLine(vLine2.y - vLine2.x, vLine2.z, vLine2.w);
+    float alpha_miter = a2 * b2 - a1 * b1;
+    float alpha_plane = clamp(vArc.z - vArc.x + 0.5, 0.0, 1.0);
+    float d = length(vArc.xy);
+    float circle_hor = max(min(vArc.w, d + 0.5) - max(-vArc.w, d - 0.5), 0.0);
+    float circle_vert = min(vArc.w * 2.0, 1.0);
+    float alpha_circle = circle_hor * circle_vert;
+    alpha = min(alpha_miter, max(alpha_circle, alpha_plane));
+} else {
+    float a1 = pixelLine(- vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float a2 = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float b1 = pixelLine(- vLine2.y - vLine2.x, vLine2.z, vLine2.w);
+    float b2 = pixelLine(vLine2.y - vLine2.x, vLine2.z, vLine2.w);
+    alpha = a2 * b2 - a1 * b1;
+    alpha *= clamp(vArc.z + 0.5, 0.0, 1.0);
 }
 `;
 
@@ -441,11 +455,14 @@ export class SmoothGraphicsProgram extends Program
         frag = smoothFrag,
         _uniforms = {})
     {
-        const { maxStyles, maxTextures } = settings;
+        const { maxStyles, maxTextures, pixelLine } = settings;
 
         vert = vert.replace(/%MAX_TEXTURES%/gi, `${maxTextures}`)
             .replace(/%MAX_STYLES%/gi, `${maxStyles}`);
-        frag = frag.replace(/%MAX_TEXTURES%/gi, `${maxTextures}`)
+        frag = frag.replace(/%PRECISION%/gi, precision)
+            .replace(/%PIXEL_LINE%/gi, pixelLineFunc[pixelLine])
+            .replace(/%PIXEL_COVERAGE%/gi, pixelCoverage)
+            .replace(/%MAX_TEXTURES%/gi, `${maxTextures}`)
             // eslint-disable-next-line @typescript-eslint/no-use-before-define
             .replace(/%FOR_LOOP%/gi, SmoothGraphicsShader.generateSampleSrc(maxTextures));
 
