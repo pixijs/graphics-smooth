@@ -5,6 +5,7 @@ import { BLEND_MODES } from '@pixi/constants';
 export interface IGraphicsBatchSettings {
     maxStyles: number;
     maxTextures: number;
+    pixelLine: number;
 }
 
 export function matrixEquals(th: Matrix, matrix: Matrix, eps = 1e-3)

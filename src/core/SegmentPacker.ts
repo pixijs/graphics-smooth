@@ -258,23 +258,23 @@ for (let i = 0; i < 8; i++)
 }
 
 // no caps for now
-verts[JOINT_TYPE.JOINT_BEVEL] = 4 + 3;
-verts[JOINT_TYPE.JOINT_BEVEL + 1] = 4 + 3;
-verts[JOINT_TYPE.JOINT_BEVEL + 2] = 4 + 3;
-verts[JOINT_TYPE.JOINT_BEVEL + 3] = 4 + 3;
+verts[JOINT_TYPE.JOINT_BEVEL] = 4 + 5;
+verts[JOINT_TYPE.JOINT_BEVEL + 1] = 4 + 5;
+verts[JOINT_TYPE.JOINT_BEVEL + 2] = 4 + 5;
+verts[JOINT_TYPE.JOINT_BEVEL + 3] = 4 + 5;
 verts[JOINT_TYPE.JOINT_ROUND] = 4 + 5;
 verts[JOINT_TYPE.JOINT_ROUND + 1] = 4 + 5;
 verts[JOINT_TYPE.JOINT_ROUND + 2] = 4 + 5;
 verts[JOINT_TYPE.JOINT_ROUND + 3] = 4 + 5;
-verts[JOINT_TYPE.JOINT_MITER] = 4 + 4;
-verts[JOINT_TYPE.JOINT_MITER + 1] = 4 + 4;
+verts[JOINT_TYPE.JOINT_MITER] = 4 + 5;
+verts[JOINT_TYPE.JOINT_MITER + 1] = 4 + 5;
 verts[JOINT_TYPE.JOINT_MITER + 2] = 4;
 verts[JOINT_TYPE.JOINT_MITER + 3] = 4;
 verts[JOINT_TYPE.JOINT_CAP_BUTT] = 4;
 verts[JOINT_TYPE.JOINT_CAP_BUTT + 1] = 4;
 verts[JOINT_TYPE.JOINT_CAP_SQUARE] = 4;
 verts[JOINT_TYPE.JOINT_CAP_SQUARE + 1] = 4;
-verts[JOINT_TYPE.JOINT_CAP_ROUND] = 4 + 4;
-verts[JOINT_TYPE.JOINT_CAP_ROUND + 1] = 4 + 4;
+verts[JOINT_TYPE.JOINT_CAP_ROUND] = 4 + 5;
+verts[JOINT_TYPE.JOINT_CAP_ROUND + 1] = 4 + 5;
 
 verts[JOINT_TYPE.CAP_ROUND] = 4;

@@ -32,7 +32,8 @@ uniform mat3 projectionMatrix;
 uniform mat3 translationMatrix;
 uniform vec4 tint;
 
-varying vec4 vDistance;
+varying vec4 vLine1;
+varying vec4 vLine2;
 varying vec4 vArc;
 varying float vType;
 
@@ -87,7 +88,6 @@ void main(void){
 
     float capType = floor(type / 32.0);
     type -= capType * 32.0;
-    vArc = vec4(0.0);
 
     int styleId = int(aStyleId + 0.5);
     float lineWidth = styleLine[styleId].x;
@@ -115,11 +115,13 @@ void main(void){
         lineAlignment = -lineAlignment;
     }
 
+    vLine1 = vec4(0.0, 10.0, 1.0, 0.0);
+    vLine2 = vec4(0.0, 10.0, 1.0, 0.0);
+    vArc = vec4(0.0);
     if (type == FILL) {
         pos = pointA;
-        vDistance = vec4(0.0, -0.5, -0.5, 1.0);
         vType = 0.0;
-
+        vLine2 = vec4(-2.0, -2.0, -2.0, 0.0);
         vec2 vTexturePixel;
         vTexturePixel.x = dot(vec3(aPoint1, 1.0), styleMatrix[styleId * 2]);
         vTexturePixel.y = dot(vec3(aPoint1, 1.0), styleMatrix[styleId * 2 + 1]);
@@ -155,21 +157,19 @@ void main(void){
             n2 = -n2;
             n3 = -n3;
         }
-
-        vDistance.w = 1.0;
         pos += bisect * expand;
 
-        vDistance = vec4(16.0, 16.0, 16.0, -1.0);
+        vLine1 = vec4(16.0, 16.0, 16.0, -1.0);
         if (flag1 > 0.5) {
-            vDistance.x = -dot(pos - prev, n1);
+            vLine1.x = -dot(pos - prev, n1);
         }
         if (flag2 > 0.5) {
-            vDistance.y = -dot(pos - pointA, n2);
+            vLine1.y = -dot(pos - pointA, n2);
         }
         if (flag3 > 0.5) {
-            vDistance.z = -dot(pos - pointB, n3);
+            vLine1.z = -dot(pos - pointB, n3);
         }
-        vDistance.xyz *= resolution;
+        vLine1.xyz *= resolution;
         vType = 2.0;
     } else if (type >= BEVEL) {
         float dy = lineWidth + expand;
@@ -182,12 +182,12 @@ void main(void){
 
         vec2 base, next, xBasis2, bisect;
         float flag = 0.0;
-        float sign2 = 1.0;
+        float side2 = 1.0;
         if (vertexNum < 0.5 || vertexNum > 2.5 && vertexNum < 3.5) {
             next = (translationMatrix * vec3(aPrev, 1.0)).xy;
             base = pointA;
             flag = type - floor(type / 2.0) * 2.0;
-            sign2 = -1.0;
+            side2 = -1.0;
         } else {
             next = (translationMatrix * vec3(aNext, 1.0)).xy;
             base = pointB;
@@ -204,13 +204,12 @@ void main(void){
             inner = 1.0 - inner;
         }
 
-        norm2 *= sign2;
+        norm2 *= side2;
 
         float collinear = step(0.0, dot(norm, norm2));
 
         vType = 0.0;
         float dy2 = -1000.0;
-        float dy3 = -1000.0;
 
         if (abs(D) < 0.01 && collinear < 0.5) {
             if (type >= ROUND && type < ROUND + 1.5) {
@@ -218,6 +217,9 @@ void main(void){
             }
             //TODO: BUTT here too
         }
+
+        vLine1 = vec4(0.0, lineWidth, max(abs(norm.x), abs(norm.y)), min(abs(norm.x), abs(norm.y)));
+        vLine2 = vec4(0.0, lineWidth, max(abs(norm2.x), abs(norm2.y)), min(abs(norm2.x), abs(norm2.y)));
 
         if (vertexNum < 3.5) {
             if (abs(D) < 0.01) {
@@ -229,6 +231,7 @@ void main(void){
                     pos = doBisect(norm, len, norm2, len2, shift + dy, inner);
                 }
             }
+            vLine2.y = -1000.0;
             if (capType >= CAP_BUTT && capType < CAP_ROUND) {
                 float extra = step(CAP_SQUARE, capType) * lineWidth;
                 vec2 back = -forward;
@@ -242,10 +245,10 @@ void main(void){
             if (type >= JOINT_CAP_BUTT && type < JOINT_CAP_SQUARE + 0.5) {
                 float extra = step(JOINT_CAP_SQUARE, type) * lineWidth;
                 if (vertexNum < 0.5 || vertexNum > 2.5) {
-                    dy3 = dot(pos + base - pointB, forward) - extra;
+                    vLine2.y = dot(pos + base - pointB, forward) - extra;
                 } else {
                     pos += forward * (expand + extra);
-                    dy3 = expand;
+                    vLine2.y = expand;
                     if (capType >= CAP_BUTT) {
                         dy2 -= expand + extra;
                     }
@@ -271,7 +274,7 @@ void main(void){
                 pos = dy * norm + d2;
                 vArc.x = abs(dy);
             }
-            dy2 = 0.0;
+            vLine2 = vec4(0.0, lineWidth * 2.0 + 10.0, 1.0  , 0.0); // forget about line2 with type=3
             vArc.y = dy;
             vArc.z = 0.0;
             vArc.w = lineWidth;
@@ -279,18 +282,28 @@ void main(void){
         } else if (abs(D) < 0.01) {
             pos = dy * norm;
         } else {
-            if (type >= ROUND && type < ROUND + 1.5) {
-                if (inner > 0.5) {
-                    dy = -dy;
-                    inner = 0.0;
+            if (inner > 0.5) {
+                dy = -dy;
+                inner = 0.0;
+            }
+            float side = sign(dy);
+            vec2 norm3 = normalize(norm + norm2);
+
+            if (type >= MITER && type < MITER + 3.5) {
+                vec2 farVertex = doBisect(norm, len, norm2, len2, shift + dy, 0.0);
+                if (length(farVertex) > abs(shift + dy) * MITER_LIMIT) {
+                    type = BEVEL;
                 }
-                if (vertexNum < 4.5) {
-                    pos = doBisect(norm, len, norm2, len2, shift - dy, 1.0);
-                } else if (vertexNum < 5.5) {
-                    pos = (shift + dy) * norm;
-                } else if (vertexNum > 7.5) {
-                    pos = (shift + dy) * norm2;
-                } else {
+            }
+
+            if (vertexNum < 4.5) {
+                pos = doBisect(norm, len, norm2, len2, shift - dy, 1.0);
+            } else if (vertexNum < 5.5) {
+                pos = (shift + dy) * norm;
+            } else if (vertexNum > 7.5) {
+                pos = (shift + dy) * norm2;
+            } else {
+                if (type >= ROUND && type < ROUND + 1.5) {
                     pos = doBisect(norm, len, norm2, len2, shift + dy, 0.0);
                     float d2 = abs(shift + dy);
                     if (length(pos) > abs(shift + dy) * 1.5) {
@@ -302,71 +315,38 @@ void main(void){
                             pos.y = (shift + dy) * norm2.y - d2 * norm2.x;
                         }
                     }
-                }
-                vec2 norm3 = normalize(norm + norm2);
-
-                float sign = step(0.0, dy) * 2.0 - 1.0;
-                vArc.x = sign * dot(pos, norm3);
-                vArc.y = pos.x * norm3.y - pos.y * norm3.x;
-                vArc.z = sign * dot(norm, norm3) * (lineWidth + sign * shift);
-                vArc.w = lineWidth + sign * shift;
-
-                dy = -sign * (dot(pos, norm) - shift);
-                dy2 = -sign * (dot(pos, norm2) - shift);
-                dy3 = vArc.z - vArc.x;
-                vType = 3.0;
-            } else {
-                if (type >= MITER && type < MITER + 3.5) {
-                    if (inner > 0.5) {
-                        dy = -dy;
-                        inner = 0.0;
-                    }
-                    float sign = step(0.0, dy) * 2.0 - 1.0;
-                    pos = doBisect(norm, len, norm2, len2, shift + dy, 0.0);
-                    if (length(pos) > abs(shift + dy) * MITER_LIMIT) {
-                        type = BEVEL;
+                } else if (type >= MITER && type < MITER + 3.5) {
+                    pos = doBisect(norm, len, norm2, len2, shift + dy, 0.0); //farVertex
+                } else if (type >= BEVEL && type < BEVEL + 1.5) {
+                    float d2 = side / resolution;
+                    if (vertexNum < 6.5) {
+                        pos = (shift + dy) * norm + d2 * norm3;
                     } else {
-                        if (vertexNum < 4.5) {
-                            dy = -dy;
-                            pos = doBisect(norm, len, norm2, len2, shift + dy, 1.0);
-                        } else if (vertexNum < 5.5) {
-                            pos = (shift + dy) * norm;
-                        } else if (vertexNum > 6.5) {
-                            pos = (shift + dy) * norm2;
-                            // dy = ...
-                        }
+                        pos = (shift + dy) * norm2 + d2 * norm3;
                     }
-                    vType = 1.0;
-                    dy = -sign * (dot(pos, norm) - shift);
-                    dy2 = -sign * (dot(pos, norm2) - shift);
-                }
-                if (type >= BEVEL && type < BEVEL + 1.5) {
-                    if (inner > 0.5) {
-                        dy = -dy;
-                        inner = 0.0;
-                    }
-                    float sign = (step(0.0, dy) * 2.0 - 1.0);
-                    vec2 norm3 = normalize((norm + norm2) / 2.0);
-                    if (vertexNum < 4.5) {
-                        dy = -dy;
-                        pos = doBisect(norm, len, norm2, len2, shift + dy, 1.0);
-                    } else {
-                        if (vertexNum < 5.5) {
-                            pos = (shift + dy) * norm + sign * norm3 * expand;
-                        } else {
-                            pos = (shift + dy) * norm2 + sign * norm3 * expand;
-                        }
-                    }
-                    vType = 4.0;
-                    dy = -sign * (dot(pos, norm) - shift);
-                    dy2 = -sign * (dot(pos, norm2) - shift);
-                    dy3 = sign * (dot(norm, norm3) * (lineWidth + sign * shift) - dot(pos, norm3));
                 }
             }
+
+            if (type >= ROUND && type < ROUND + 1.5) {
+                vArc.x = side * dot(pos, norm3);
+                vArc.y = pos.x * norm3.y - pos.y * norm3.x;
+                vArc.z = dot(norm, norm3) * (lineWidth + side * shift);
+                vArc.w = lineWidth + side * shift;
+                vType = 3.0;
+            } else if (type >= MITER && type < MITER + 3.5) {
+                vType = 1.0;
+            } else if (type >= BEVEL && type < BEVEL + 1.5) {
+                vType = 4.0;
+                vArc.z = dot(norm, norm3) * (lineWidth + side * shift) - side * dot(pos, norm3);
+            }
+
+            dy = side * (dot(pos, norm) - shift);
+            dy2 = side * (dot(pos, norm2) - shift);
         }
 
         pos += base;
-        vDistance = vec4(dy, dy2, dy3, lineWidth) * resolution;
+        vLine1.xy = vec2(dy, vLine1.y) * resolution;
+        vLine2.xy = vec2(dy2, vLine2.y) * resolution;
         vArc = vArc * resolution;
         vTravel = aTravel * avgScale + dot(pos - pointA, vec2(-norm.y, norm.x));
     }
@@ -376,14 +356,18 @@ void main(void){
     vColor = aColor * tint;
 }`;
 
-const smoothFrag = `#version 100
+const precision = `#version 100
 #ifdef GL_FRAGMENT_PRECISION_HIGH
   precision highp float;
 #else
   precision mediump float;
 #endif
+`;
+
+const smoothFrag = `%PRECISION%
 varying vec4 vColor;
-varying vec4 vDistance;
+varying vec4 vLine1;
+varying vec4 vLine2;
 varying vec4 vArc;
 varying float vType;
 varying float vTextureId;
@@ -391,60 +375,74 @@ varying vec2 vTextureCoord;
 varying float vTravel;
 uniform sampler2D uSamplers[%MAX_TEXTURES%];
 
-const float w2 = 0.5;
-const float w1 = w2 * 2.0;
+%PIXEL_LINE%
 
 void main(void){
-    float alpha = 1.0;
-    float lineWidth = vDistance.w;
-    if (vType < 0.5) {
-        float left = max(vDistance.x - w2, -vDistance.w);
-        float right = min(vDistance.x + w2, vDistance.w);
-        float near = vDistance.y - w2;
-        float far = min(vDistance.y + w2, 0.0);
-        float top = vDistance.z - w2;
-        float bottom = min(vDistance.z + w2, 0.0);
-        alpha = max(right - left, 0.0) * max(bottom - top, 0.0) * max(far - near, 0.0);
-        alpha /= w1 * w1 * w1;
-    } else if (vType < 1.5) {
-        float a1 = clamp(vDistance.x + w2 - lineWidth, 0.0, w1);
-        float a2 = clamp(vDistance.x + w2 + lineWidth, 0.0, w1);
-        float b1 = clamp(vDistance.y + w2 - lineWidth, 0.0, w1);
-        float b2 = clamp(vDistance.y + w2 + lineWidth, 0.0, w1);
-        alpha = a2 * b2 - a1 * b1;
-    } else if (vType < 2.5) {
-        alpha *= max(min(vDistance.x + 0.5, 1.0), 0.0);
-        alpha *= max(min(vDistance.y + 0.5, 1.0), 0.0);
-        alpha *= max(min(vDistance.z + 0.5, 1.0), 0.0);
-    } else if (vType < 3.5) {
-        float a1 = clamp(vDistance.x + w2 - lineWidth, 0.0, w1);
-        float a2 = clamp(vDistance.x + w2 + lineWidth, 0.0, w1);
-        float b1 = clamp(vDistance.y + w2 - lineWidth, 0.0, w1);
-        float b2 = clamp(vDistance.y + w2 + lineWidth, 0.0, w1);
-        float alpha_miter = a2 * b2 - a1 * b1;
-        float alpha_plane = max(min(vDistance.z + w2, 1.0), 0.0) * w1;
-        float d = length(vArc.xy);
-        float circle_hor = max(min(vArc.w, d + w2) - max(-vArc.w, d - w2), 0.0);
-        float circle_vert = min(vArc.w * 2.0, w1);
-        float alpha_circle = circle_hor * circle_vert;
-        alpha = min(alpha_miter, max(alpha_circle, alpha_plane));
-        // alpha = min(alpha_miter, alpha_plane);
-        alpha /= w1 * w1;
-    } else {
-        float a1 = clamp(vDistance.x + w2 - lineWidth, 0.0, w1);
-        float a2 = clamp(vDistance.x + w2 + lineWidth, 0.0, w1);
-        float b1 = clamp(vDistance.y + w2 - lineWidth, 0.0, w1);
-        float b2 = clamp(vDistance.y + w2 + lineWidth, 0.0, w1);
-        alpha = a2 * b2 - a1 * b1;
-        alpha *= max(min(vDistance.z + w2, 1.0), 0.0);
-        alpha /= w1 * w1;
-    }
+    %PIXEL_COVERAGE%
 
     vec4 texColor;
     float textureId = floor(vTextureId+0.5);
     %FOR_LOOP%
 
     gl_FragColor = vColor * texColor * alpha;
+}
+`;
+
+const pixelLineFunc = [`
+float pixelLine(float x, float A, float B) {
+    return clamp(x + 0.5, 0.0, 1.0);
+}
+`, `
+float pixelLine(float x, float A, float B) {
+    float y = abs(x), s = sign(x);
+    if (y * 2.0 < A - B) {
+        return 0.5 + s * y / A;
+    }
+    y -= (A - B) * 0.5;
+    y = max(1.0 - y / B, 0.0);
+    return (1.0 + s * (1.0 - y * y)) * 0.5;
+    //return clamp(x + 0.5, 0.0, 1.0);
+}
+`];
+
+const pixelCoverage = `float alpha = 1.0;
+if (vType < 0.5) {
+    float left = pixelLine(-vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float right = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float near = vLine2.x - 0.5;
+    float far = min(vLine2.x + 0.5, 0.0);
+    float top = vLine2.y - 0.5;
+    float bottom = min(vLine2.y + 0.5, 0.0);
+    alpha = (right - left) * max(bottom - top, 0.0) * max(far - near, 0.0);
+} else if (vType < 1.5) {
+    float a1 = pixelLine(- vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float a2 = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float b1 = pixelLine(- vLine2.y - vLine2.x, vLine2.z, vLine2.w);
+    float b2 = pixelLine(vLine2.y - vLine2.x, vLine2.z, vLine2.w);
+    alpha = a2 * b2 - a1 * b1;
+} else if (vType < 2.5) {
+    alpha *= max(min(vLine1.x + 0.5, 1.0), 0.0);
+    alpha *= max(min(vLine1.y + 0.5, 1.0), 0.0);
+    alpha *= max(min(vLine1.z + 0.5, 1.0), 0.0);
+} else if (vType < 3.5) {
+    float a1 = pixelLine(- vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float a2 = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float b1 = pixelLine(- vLine2.y - vLine2.x, vLine2.z, vLine2.w);
+    float b2 = pixelLine(vLine2.y - vLine2.x, vLine2.z, vLine2.w);
+    float alpha_miter = a2 * b2 - a1 * b1;
+    float alpha_plane = clamp(vArc.z - vArc.x + 0.5, 0.0, 1.0);
+    float d = length(vArc.xy);
+    float circle_hor = max(min(vArc.w, d + 0.5) - max(-vArc.w, d - 0.5), 0.0);
+    float circle_vert = min(vArc.w * 2.0, 1.0);
+    float alpha_circle = circle_hor * circle_vert;
+    alpha = min(alpha_miter, max(alpha_circle, alpha_plane));
+} else {
+    float a1 = pixelLine(- vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float a2 = pixelLine(vLine1.y - vLine1.x, vLine1.z, vLine1.w);
+    float b1 = pixelLine(- vLine2.y - vLine2.x, vLine2.z, vLine2.w);
+    float b2 = pixelLine(vLine2.y - vLine2.x, vLine2.z, vLine2.w);
+    alpha = a2 * b2 - a1 * b1;
+    alpha *= clamp(vArc.z + 0.5, 0.0, 1.0);
 }
 `;
 
@@ -457,11 +455,14 @@ export class SmoothGraphicsProgram extends Program
         frag = smoothFrag,
         _uniforms = {})
     {
-        const { maxStyles, maxTextures } = settings;
+        const { maxStyles, maxTextures, pixelLine } = settings;
 
         vert = vert.replace(/%MAX_TEXTURES%/gi, `${maxTextures}`)
             .replace(/%MAX_STYLES%/gi, `${maxStyles}`);
-        frag = frag.replace(/%MAX_TEXTURES%/gi, `${maxTextures}`)
+        frag = frag.replace(/%PRECISION%/gi, precision)
+            .replace(/%PIXEL_LINE%/gi, pixelLineFunc[pixelLine])
+            .replace(/%PIXEL_COVERAGE%/gi, pixelCoverage)
+            .replace(/%MAX_TEXTURES%/gi, `${maxTextures}`)
             // eslint-disable-next-line @typescript-eslint/no-use-before-define
             .replace(/%FOR_LOOP%/gi, SmoothGraphicsShader.generateSampleSrc(maxTextures));
 

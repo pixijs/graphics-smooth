@@ -90,6 +90,7 @@ export class SmoothGraphics extends Container
         this.shaderSettings = {
             maxStyles: settings.SHADER_MAX_STYLES,
             maxTextures: settings.SHADER_MAX_TEXTURES,
+            pixelLine: settings.PIXEL_LINE,
         };
 
         this.state = State.for2d();

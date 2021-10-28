@@ -58,7 +58,10 @@
   "eslintConfig": {
     "extends": [
       "@pixi/eslint-config"
-    ]
+    ],
+    "rules": {
+      "linebreak-style": 0
+    }
   },
   "files": [
     "dist/",
