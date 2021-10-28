@@ -97,12 +97,13 @@ function makeFigures(graphics) {
     graphics.endFill();
 }
 
+PIXI.smooth.SmoothGraphics.prototype.drawStar = PIXI.Graphics.prototype.drawStar;
+
 const graphics = new PIXI.smooth.SmoothGraphics();
 makeFigures(graphics);
 app.stage.addChild(graphics);
 
 const graphics2 = new PIXI.Graphics();
-PIXI.Graphics.prototype.drawStar = PIXI.smooth.SmoothGraphics.prototype.drawStar;
 graphics2.y = 600;
 makeFigures(graphics2);
 app.stage.addChild(graphics2);
