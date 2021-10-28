@@ -83,6 +83,18 @@ For UMD:
 PIXI.smooth.SmoothGraphics.prototype.drawStar = PIXI.Graphics.prototype.drawStar;
 ```
 
+### Pixel Perfect
+
+You might notice that for diagonal lines, coverage differs from canvas2d a lot, especially if you do line animations. Solution is easy:
+
+```js
+import { settings } from '@pixi/graphics-smooth';
+settings.PIXEL_LINE = 1;
+```
+
+It has to be done before first GraphicsSmooth is created.
+
+This setting is disabled by default because it adds extra computations in coverage calculation. It is not researched yet how it will affect performance.
 
 ### What are we working on
 
