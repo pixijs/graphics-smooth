@@ -12,6 +12,8 @@ const renderer2 = new PIXI.CanvasRenderer({
     resolution: 2,
 });
 
+PIXI.smooth.settings.PIXEL_LINE = 1;
+
 document.body.appendChild(app.view);
 document.body.appendChild(renderer2.view);
 app.view.style['image-rendering'] = 'pixelated'

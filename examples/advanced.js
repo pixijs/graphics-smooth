@@ -30,6 +30,22 @@ graphics2.y = 300;
 makeFigures(graphics2);
 app.stage.addChild(graphics2);
 
+const graphics3 = new PIXI.smooth.SmoothGraphics()
+    .beginFill(0xff0000, 1.0)
+    .lineStyle(3, 0x000000)
+    .drawRoundedRect(100, 120, 100, 200, 50)
+    .endFill()
+    .beginFill(0x00ff00, 1.0)
+    .lineStyle(3, 0x000000)
+    .drawRoundedRect(250, 100, 100, 100, 50)
+    .endFill()
+    .beginFill(0xffff00, 1.0)
+    .lineStyle(3, 0x000000)
+    .drawRoundedRect(250, 250, 150, 100, 50)
+    .endFill();
+app.stage.addChild(graphics3);
+graphics3.position.y = 100;
+
 // const canvasRenderer = new PIXI.CanvasRenderer();
 // document.body.appendChild(canvasRenderer.view);
 // canvasRenderer.render(app.stage);
