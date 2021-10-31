@@ -16,7 +16,8 @@ function quadraticBezierCurve(
     fromX: number, fromY: number,
     cpX: number, cpY: number,
     toX: number, toY: number,
-    out: Array<number> = []): Array<number>
+    out: Array<number> = [],
+    eps = 0.001): Array<number>
 {
     const n = 20;
     const points = out;
@@ -41,6 +42,14 @@ function quadraticBezierCurve(
         // The Black Dot
         x = getPt(xa, xb, j);
         y = getPt(ya, yb, j);
+
+        // Handle case when first curve points overlaps and earcut fails to triangulate
+        if (i === 0
+            && Math.abs(x - points[points.length - 2]) < eps
+            && Math.abs(y - points[points.length - 1]) < eps)
+        {
+            continue;
+        }
 
         points.push(x, y);
     }
@@ -74,22 +83,32 @@ export class RoundedRectangleBuilder implements IShapeBuilder
         }
         else
         {
+            const eps = _target.closePointEps;
+
             quadraticBezierCurve(x, y + radius,
                 x, y,
                 x + radius, y,
-                points);
+                points, eps);
             quadraticBezierCurve(x + width - radius,
                 y, x + width, y,
                 x + width, y + radius,
-                points);
+                points, eps);
             quadraticBezierCurve(x + width, y + height - radius,
                 x + width, y + height,
                 x + width - radius, y + height,
-                points);
+                points, eps);
             quadraticBezierCurve(x + radius, y + height,
                 x, y + height,
                 x, y + height - radius,
-                points);
+                points, eps);
+
+            if (points.length >= 4
+                && Math.abs(points[0] - points[points.length - 2]) < eps
+                && Math.abs(points[1] - points[points.length - 1]) < eps)
+            {
+                points.pop();
+                points.pop();
+            }
         }
     }
 
@@ -97,7 +116,6 @@ export class RoundedRectangleBuilder implements IShapeBuilder
     {
         const { verts, joints } = target;
         const { points } = graphicsData;
-
 
         const joint = points.length === 8 // we dont need joints for arcs
             ? graphicsData.goodJointType() : JOINT_TYPE.JOINT_MITER + 3;
