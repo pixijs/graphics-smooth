@@ -82,7 +82,7 @@ export class CircleBuilder implements IShapeBuilder
             {
                 verts.push(points[i], points[i + 1]);
                 joints.push(JOINT_TYPE.FILL);
-                if (i > 2)
+                if (i > 0)
                 {
                     triangles.push(vertPos++, center, vertPos);
                 }
