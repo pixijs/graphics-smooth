@@ -376,17 +376,24 @@ export class SmoothGraphicsGeometry extends Geometry
             }
             if (fillStyle.visible)
             {
-                if (holes.length)
-                {
-                    this.processHoles(holes);
-                }
                 data.fillAA = (data.fillStyle as any).smooth
                     && !(data.lineStyle.visible
                     && data.lineStyle.alpha >= 0.99
                     && data.lineStyle.width >= 0.99);
 
                 data.fillStart = buildData.joints.length;
-                command.fill(data, buildData);
+
+                if (holes.length)
+                {
+                    this.processHoles(holes);
+
+                    FILL_COMMANDS[SHAPES.POLY].fill(data, buildData);
+                }
+                else
+                {
+                    command.fill(data, buildData);
+                }
+
                 data.fillLen = buildData.joints.length - data.fillStart;
             }
             if (lineStyle.visible)
