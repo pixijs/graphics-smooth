@@ -46,10 +46,14 @@ export class CircleBuilder implements IShapeBuilder
         {
             totalSegs = 3;
         }
+        else
+        {
+            totalSegs = Math.ceil(totalSegs);
+        }
 
         const seg = (Math.PI * 2) / totalSegs;
 
-        for (let i = 0; i < totalSegs - 0.5; i++)
+        for (let i = 0; i < totalSegs; i++)
         {
             points.push(
                 x + (Math.sin(-seg * i) * width),
