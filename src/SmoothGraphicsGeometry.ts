@@ -400,6 +400,10 @@ export class SmoothGraphicsGeometry extends Geometry
             {
                 data.strokeStart = buildData.joints.length;
                 command.line(data, buildData);
+                for (let i = 0; i < holes.length; i++)
+                {
+                    command.line(holes[i], buildData);
+                }
                 data.strokeLen = buildData.joints.length - data.strokeStart;
             }
         }
