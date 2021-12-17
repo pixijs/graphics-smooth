@@ -320,7 +320,7 @@ export class PolyBuilder implements IShapeBuilder
         {
             pn.length = points.length;
         }
-        const start = 0;
+        let start = 0;
 
         for (let i = 0; i <= holeArray.length; i++)
         {
@@ -344,6 +344,7 @@ export class PolyBuilder implements IShapeBuilder
                 pn[j * 2 + 1] = j + 1;
                 pn[j * 2 + 2] = j;
             }
+            start = finish;
         }
 
         // sort color
