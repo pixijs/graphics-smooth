@@ -391,7 +391,14 @@ export class SmoothGraphicsGeometry extends Geometry
                 }
                 else
                 {
-                    command.fill(data, buildData);
+                    if (data.fillAA && (data.type === SHAPES.RECT || data.type === SHAPES.RREC))
+                    {
+                        FILL_COMMANDS[SHAPES.POLY].fill(data, buildData);
+                    }
+                    else
+                    {
+                        command.fill(data, buildData);
+                    }
                 }
 
                 data.fillLen = buildData.joints.length - data.fillStart;
