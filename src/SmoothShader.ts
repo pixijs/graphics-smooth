@@ -238,7 +238,7 @@ void main(void){
         vType = 0.0;
         float dy2 = -1000.0;
 
-        if (abs(D) < 0.01 && collinear < 0.5) {
+        if (D == 0.0 && collinear < 0.5) {
             if (type >= ROUND && type < ROUND + 1.5) {
                 type = JOINT_CAP_ROUND;
             }
@@ -249,7 +249,7 @@ void main(void){
         vLine2 = vec4(0.0, lineWidth, max(abs(norm2.x), abs(norm2.y)), min(abs(norm2.x), abs(norm2.y)));
 
         if (vertexNum < 3.5) {
-            if (abs(D) < 0.01) {
+            if (D == 0.0) {
                 pos = (shift + dy) * norm;
             } else {
                 if (flag < 0.5 && inner < 0.5) {
@@ -306,7 +306,7 @@ void main(void){
             vArc.z = 0.0;
             vArc.w = lineWidth;
             vType = 3.0;
-        } else if (abs(D) < 0.01) {
+        } else if (D == 0.0) {
             pos = dy * norm;
         } else {
             if (inner > 0.5) {
