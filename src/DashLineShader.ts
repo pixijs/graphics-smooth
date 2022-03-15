@@ -19,14 +19,18 @@ void main(void){
     %PIXEL_COVERAGE%
 
     float d = dash * vTravel.y;
-    float g = gap * vTravel.y;
-
-    if (d + g > 1.0)
-    {
-        float travel = mod(vTravel.x + d * 0.5, d + g) - (d * 0.5);
-        float left = max(travel - 0.5, -0.5);
-        float right = min(travel + 0.5, d + 0.5);
-        alpha *= max(0.0, right - left);
+    if (d > 0.0) {
+        float g = gap * vTravel.y;
+        if (g > 0.0) {
+            float t = mod(vTravel.x, d + g);
+            alpha *= mix(
+                min(0.5 * d + 0.5 - abs(t - 0.5 * d), 1.0),
+                max(abs(t - 0.5 * g - d) - 0.5 * g + 0.5, 0.0),
+                step(d, t)
+            );
+        }
+    } else {
+        alpha = 0.0;
     }
 
     vec4 texColor;
