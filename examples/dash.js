@@ -1,10 +1,11 @@
 const app = new PIXI.Application({ antialias: false,
-    width: 800, height: 600 * 2,
+    width: 800, height: 650 * 2,
     autoDensity: true, resolution: 1.0,
 });
 document.body.appendChild(app.view);
 
-const shader = new PIXI.smooth.DashLineShader({dash: 5, gap: 8});
+const shader = new PIXI.smooth.DashLineShader({dash: 8, gap: 5});
+const shader2 = new PIXI.smooth.DashLineShader({dash: 50, gap: 25});
 
 function makeFigures(graphics) {
 // Rectangle
@@ -95,6 +96,14 @@ function makeFigures(graphics) {
     graphics.beginFill(0x3500FA, 1.0, true);
     graphics.drawPolygon(path);
     graphics.endFill();
+
+    // draw polygon
+    const box = new PIXI.Polygon([100, 600, 700, 600, 700, 625, 100, 625]);
+
+    graphics.lineStyle({width: 4, color: 0xFFFFFF, shader: shader2});
+    graphics.beginFill(0x005A35, 1.0, true);
+    graphics.drawPolygon(box);
+    graphics.endFill();
 }
 
 PIXI.smooth.SmoothGraphics.prototype.drawStar = PIXI.Graphics.prototype.drawStar;
@@ -104,7 +113,7 @@ makeFigures(graphics);
 app.stage.addChild(graphics);
 
 const graphics2 = new PIXI.Graphics();
-graphics2.y = 600;
+graphics2.y = 650;
 makeFigures(graphics2);
 app.stage.addChild(graphics2);
 
