@@ -23,9 +23,9 @@ void main(void){
 
     if (d + g > 1.0)
     {
-        float travel = mod(vTravel.x + g * 0.5, d + g) - (g * 0.5);
+        float travel = mod(vTravel.x + d * 0.5, d + g) - (d * 0.5);
         float left = max(travel - 0.5, -0.5);
-        float right = min(travel + 0.5, g + 0.5);
+        float right = min(travel + 0.5, d + 0.5);
         alpha *= max(0.0, right - left);
     }
 
@@ -50,8 +50,8 @@ export class DashLineShader extends SmoothGraphicsShader
 
         super(settings, new SmoothGraphicsProgram(settings, undefined, dashFrag),
             dashParams || {
-                dash: 5.0,
-                gap: 8.0
+                dash: 8.0,
+                gap: 5.0
             });
     }
 }
