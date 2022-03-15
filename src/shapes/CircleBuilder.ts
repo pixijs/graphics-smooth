@@ -96,7 +96,21 @@ export class CircleBuilder implements IShapeBuilder
             return;
         }
 
-        const rad = circle.radius;
+        let width;
+        let height;
+
+        if (graphicsData.type === SHAPES.CIRC)
+        {
+            width = circle.radius;
+            height = circle.radius;
+        }
+        else
+        {
+            const ellipse = graphicsData.shape as Ellipse;
+
+            width = ellipse.width;
+            height = ellipse.height;
+        }
 
         for (let i = 0; i < points.length; i += 2)
         {
@@ -113,10 +127,10 @@ export class CircleBuilder implements IShapeBuilder
 
             verts.push(0);
             verts.push(0);
-            verts.push((points[cur] - cx) / rad);
-            verts.push((points[cur + 1] - cy) / rad);
-            verts.push((points[next] - cx) / rad);
-            verts.push((points[next + 1] - cy) / rad);
+            verts.push((points[cur] - cx) / width);
+            verts.push((points[cur + 1] - cy) / height);
+            verts.push((points[next] - cx) / width);
+            verts.push((points[next + 1] - cy) / height);
 
             joints.push(JOINT_TYPE.FILL_EXPAND + 2);
             joints.push(JOINT_TYPE.NONE);

@@ -53,6 +53,12 @@ function makeFigures(graphics) {
     graphics.drawEllipse(600, 250, 80, 50);
     graphics.endFill();
 
+// Ellipse
+    graphics.lineStyle(0);
+    graphics.beginFill(0x4F08AA, 1, true);
+    graphics.drawEllipse(700, 350, 40, 25);
+    graphics.endFill();
+
 // draw a shape
     graphics.beginFill(0xFF3300);
     graphics.lineStyle(4, 0xffd900, 1);
