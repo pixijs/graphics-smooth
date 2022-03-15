@@ -378,8 +378,11 @@ export class SmoothGraphicsGeometry extends Geometry
             {
                 data.fillAA = (data.fillStyle as any).smooth
                     && !(data.lineStyle.visible
+                    && !data.lineStyle.shader
                     && data.lineStyle.alpha >= 0.99
-                    && data.lineStyle.width >= 0.99);
+                    && data.lineStyle.width >= 0.99
+                    && data.lineStyle.alignment >= 0.01
+                    && data.lineStyle.alignment <= 0.99);
 
                 data.fillStart = buildData.joints.length;
 
