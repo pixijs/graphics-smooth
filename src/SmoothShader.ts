@@ -47,7 +47,7 @@ attribute vec4 aColor;
 varying float vTextureId;
 varying vec4 vColor;
 varying vec2 vTextureCoord;
-varying float vTravel;
+varying vec2 vTravel;
 
 uniform vec2 styleLine[%MAX_STYLES%];
 uniform vec3 styleMatrix[2 * %MAX_STYLES%];
@@ -375,7 +375,7 @@ void main(void){
         vLine1.xy = vec2(dy, vLine1.y) * resolution;
         vLine2.xy = vec2(dy2, vLine2.y) * resolution;
         vArc = vArc * resolution;
-        vTravel = aTravel * avgScale + dot(pos - pointA, vec2(-norm.y, norm.x));
+        vTravel = vec2(aTravel * avgScale + dot(pos - pointA, vec2(-norm.y, norm.x)), avgScale);
     }
 
     gl_Position = vec4((projectionMatrix * vec3(pos, 1.0)).xy, 0.0, 1.0);
@@ -399,7 +399,7 @@ varying vec4 vArc;
 varying float vType;
 varying float vTextureId;
 varying vec2 vTextureCoord;
-varying float vTravel;
+varying vec2 vTravel;
 uniform sampler2D uSamplers[%MAX_TEXTURES%];
 
 %PIXEL_LINE%

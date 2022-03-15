@@ -8,7 +8,7 @@ varying vec4 vArc;
 varying float vType;
 varying float vTextureId;
 varying vec2 vTextureCoord;
-varying float vTravel;
+varying vec2 vTravel;
 uniform sampler2D uSamplers[%MAX_TEXTURES%];
 uniform float dash;
 uniform float gap;
@@ -18,11 +18,14 @@ uniform float gap;
 void main(void){
     %PIXEL_COVERAGE%
 
-    if (dash + gap > 1.0)
+    float d = dash * vTravel.y;
+    float g = gap * vTravel.y;
+
+    if (d + g > 1.0)
     {
-        float travel = mod(vTravel + gap * 0.5, dash + gap) - (gap * 0.5);
+        float travel = mod(vTravel.x + g * 0.5, d + g) - (g * 0.5);
         float left = max(travel - 0.5, -0.5);
-        float right = min(travel + 0.5, gap + 0.5);
+        float right = min(travel + 0.5, g + 0.5);
         alpha *= max(0.0, right - left);
     }
 
