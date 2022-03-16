@@ -374,6 +374,10 @@ export class SmoothGraphicsGeometry extends Geometry
             {
                 continue;
             }
+            if (fillStyle.visible || lineStyle.visible)
+            {
+                this.processHoles(holes);
+            }
             if (fillStyle.visible)
             {
                 data.fillAA = (data.fillStyle as any).smooth
@@ -388,8 +392,6 @@ export class SmoothGraphicsGeometry extends Geometry
 
                 if (holes.length)
                 {
-                    this.processHoles(holes);
-
                     FILL_COMMANDS[SHAPES.POLY].fill(data, buildData);
                 }
                 else
