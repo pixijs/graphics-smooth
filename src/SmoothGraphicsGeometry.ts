@@ -415,7 +415,8 @@ export class SmoothGraphicsGeometry extends Geometry
                 command.line(data, buildData);
                 for (let i = 0; i < holes.length; i++)
                 {
-                    command.line(holes[i], buildData);
+                    const hole = holes[i];
+                    FILL_COMMANDS[hole.type].line(hole, buildData);
                 }
                 data.strokeLen = buildData.joints.length - data.strokeStart;
             }
