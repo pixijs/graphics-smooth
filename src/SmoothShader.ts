@@ -135,6 +135,19 @@ void main(void){
 
         vec2 prev = (translationMatrix * vec3(aPrev, 1.0)).xy;
 
+        if (vertexNum < 0.5) {
+            pos = prev;
+        } else if (vertexNum < 1.5) {
+            pos = pointA;
+        } else {
+            pos = pointB;
+        }
+        float len2 = length(aNext);
+        vec2 bisect = (translationMatrix * vec3(aNext, 0.0)).xy;
+        if (len2 > 0.01) {
+            bisect = normalize(bisect) * len2;
+        }
+
         vec2 n1 = normalize(vec2(pointA.y - prev.y, -(pointA.x - prev.x)));
         vec2 n2 = normalize(vec2(pointB.y - pointA.y, -(pointB.x - pointA.x)));
         vec2 n3 = normalize(vec2(prev.y - pointB.y, -(prev.x - pointB.x)));
@@ -144,46 +157,6 @@ void main(void){
             n2 = -n2;
             n3 = -n3;
         }
-
-        float len2 = length(aNext);
-        vec2 bisect = (translationMatrix * vec3(aNext, 0.0)).xy;
-
-        if (vertexNum < 0.5) {
-            pos = prev;
-
-            if (flag1 < 0.5 && flag3 < 0.5) {
-                bisect = vec2(0.0);
-            } else if (flag1 < 0.5) {
-                bisect = vec2(n1.y, -n1.x) + n1 / 8.0;
-            } else if (flag3 < 0.5) {
-                bisect = vec2(-n3.y, n3.x) + n3 / 8.0;
-            }
-        } else if (vertexNum < 1.5) {
-            pos = pointA;
-
-            if (flag1 < 0.5 && flag2 < 0.5) {
-                bisect = vec2(0.0);
-            } else if (flag1 < 0.5) {
-                bisect = vec2(-n1.y, n1.x) + n1 / 8.0;
-            } else if (flag2 < 0.5) {
-                bisect = vec2(n2.y, -n2.x) + n2 / 8.0;
-            }
-        } else {
-            pos = pointB;
-
-            if (flag2 < 0.5 && flag3 < 0.5) {
-                bisect = vec2(0.0);
-            } else if (flag2 < 0.5) {
-                bisect = vec2(-n2.y, n2.x) + n2 / 8.0;
-            } else if (flag3 < 0.5) {
-                bisect = vec2(n3.y, -n3.x) + n3 / 8.0;
-            }
-        }
-
-        if (length(bisect) > 0.0) {
-            bisect = normalize(bisect) * len2;
-        }
-
         pos += bisect * expand;
 
         vLine1 = vec4(16.0, 16.0, 16.0, -1.0);
