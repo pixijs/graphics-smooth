@@ -391,20 +391,13 @@ export class SmoothGraphicsGeometry extends Geometry
 
                 data.fillStart = buildData.joints.length;
 
-                if (holes.length)
+                if (holes.length || (data.fillAA && data.type === SHAPES.RECT))
                 {
                     FILL_COMMANDS[SHAPES.POLY].fill(data, buildData);
                 }
                 else
                 {
-                    if (data.fillAA && (data.type === SHAPES.RECT || data.type === SHAPES.RREC))
-                    {
-                        FILL_COMMANDS[SHAPES.POLY].fill(data, buildData);
-                    }
-                    else
-                    {
-                        command.fill(data, buildData);
-                    }
+                    command.fill(data, buildData);
                 }
 
                 data.fillLen = buildData.joints.length - data.fillStart;
