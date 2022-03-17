@@ -385,9 +385,7 @@ export class SmoothGraphicsGeometry extends Geometry
                     && !(data.lineStyle.visible
                     && !data.lineStyle.shader
                     && data.lineStyle.alpha >= 0.99
-                    && data.lineStyle.width >= 0.99
-                    && data.lineStyle.alignment >= 0.01
-                    && data.lineStyle.alignment <= 0.99);
+                    && data.lineStyle.width * Math.min(data.lineStyle.alignment, 1 - data.lineStyle.alignment) >= 0.495);
 
                 data.fillStart = buildData.joints.length;
 
