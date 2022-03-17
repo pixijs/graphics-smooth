@@ -826,18 +826,7 @@ export class SmoothGraphicsGeometry extends Geometry
 
             if (lineStyle && lineStyle.visible)
             {
-                const alignment = lineStyle.alignment;
-
-                lineWidth = lineStyle.width;
-
-                if (type === SHAPES.POLY)
-                {
-                    lineWidth = lineWidth * (0.5 + Math.abs(0.5 - alignment));
-                }
-                else
-                {
-                    lineWidth = lineWidth * Math.max(0, alignment);
-                }
+                lineWidth = lineStyle.width * Math.max(0, lineStyle.alignment);
             }
 
             if (curMatrix !== nextMatrix)
