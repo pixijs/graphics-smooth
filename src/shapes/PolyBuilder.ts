@@ -257,7 +257,7 @@ export class PolyBuilder implements IShapeBuilder
             const dx3 = x1 - prevX;
             const dy3 = y1 - prevY;
 
-            if (joint >= JOINT_TYPE.JOINT_BEVEL && joint <= JOINT_TYPE.JOINT_MITER)
+            if (endJoint >= JOINT_TYPE.JOINT_BEVEL && endJoint <= JOINT_TYPE.JOINT_MITER)
             {
                 const dx2 = nextX - x2;
                 const dy2 = nextY - y2;
@@ -269,7 +269,7 @@ export class PolyBuilder implements IShapeBuilder
 
                     if (Math.abs(D) < eps)
                     {
-                        switch (joint & ~3)
+                        switch (endJoint & ~3)
                         {
                             case JOINT_TYPE.JOINT_ROUND:
                                 endJoint = JOINT_TYPE.JOINT_CAP_ROUND;
@@ -281,7 +281,7 @@ export class PolyBuilder implements IShapeBuilder
                     }
                 }
 
-                if (joint === JOINT_TYPE.JOINT_MITER)
+                if (endJoint === JOINT_TYPE.JOINT_MITER)
                 {
                     let jointAdd = 0;
 
