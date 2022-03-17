@@ -792,6 +792,8 @@ export class SmoothGraphicsGeometry extends Geometry
             const hole = holes[i];
             const command = FILL_COMMANDS[hole.type];
 
+            hole.clearPath();
+
             command.path(hole, this.buildData);
 
             if (hole.matrix)
