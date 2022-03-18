@@ -5,6 +5,7 @@ import { FILL_COMMANDS } from './shapes';
 import {
     Buffer,
     Geometry,
+    Texture
 } from '@pixi/core';
 
 import { WRAP_MODES, TYPES } from '@pixi/constants';
@@ -381,6 +382,7 @@ export class SmoothGraphicsGeometry extends Geometry
             if (fillStyle.visible)
             {
                 data.fillAA = (data.fillStyle as any).smooth
+                    && data.fillStyle.texture === Texture.WHITE
                     && holes.length === 0
                     && !(data.lineStyle.visible
                     && !data.lineStyle.shader
