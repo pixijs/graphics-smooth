@@ -95,10 +95,13 @@ function makeFigures(graphics) {
 
 // draw polygon
     const path = [600, 370, 700, 460, 780, 420, 730, 570, 590, 520];
+    const polygon = new PIXI.Polygon(path);
 
-    graphics.lineStyle(0);
+    polygon.closeStroke = false;
+
+    graphics.lineStyle(4, 0xFFFFFF);
     graphics.beginFill(0x3500FA, 1.0, true);
-    graphics.drawPolygon(path);
+    graphics.drawShape(polygon);
     graphics.endFill();
 }
 

@@ -384,7 +384,8 @@ export class SmoothGraphicsGeometry extends Geometry
                 data.fillAA = (data.fillStyle as any).smooth
                     && data.fillStyle.texture === Texture.WHITE
                     && holes.length === 0
-                    && !(data.lineStyle.visible
+                    && !(data.closeStroke
+                    && data.lineStyle.visible
                     && !data.lineStyle.shader
                     && data.lineStyle.alpha >= 0.99
                     && data.lineStyle.width * Math.min(data.lineStyle.alignment, 1 - data.lineStyle.alignment) >= 0.495);
