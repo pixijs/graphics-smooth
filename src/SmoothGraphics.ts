@@ -51,6 +51,14 @@ export interface ILineStyleOptions extends IFillStyleOptions {
 
 export class SmoothGraphics extends Container
 {
+    public static get nextRoundedRectBehavior(): boolean {
+        return (Graphics as any).nextRoundedRectBehavior;
+    }
+
+    public static set nextRoundedRectBehavior(value: boolean) {
+        (Graphics as any).nextRoundedRectBehavior = value;
+    }
+
     static _TEMP_POINT = new Point();
 
     public shader: Shader;

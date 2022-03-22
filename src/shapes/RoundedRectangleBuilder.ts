@@ -1,9 +1,9 @@
 import type { IShapeBuilder } from '../core/IShapeBuilder';
 import { SmoothGraphicsData } from '../core/SmoothGraphicsData';
 import { BuildData } from '../core/BuildData';
+import { Graphics } from '@pixi/graphics';
 import { RoundedRectangle } from '@pixi/math';
-import { earcut } from '@pixi/utils';
-import { JOINT_TYPE } from '../core/const';
+import { CircleBuilder } from './CircleBuilder';
 
 function getPt(n1: number, n2: number, perc: number): number
 {
@@ -59,8 +59,17 @@ function quadraticBezierCurve(
 
 export class RoundedRectangleBuilder implements IShapeBuilder
 {
+    _circleBuilder = new CircleBuilder();
+
     path(graphicsData: SmoothGraphicsData, _target: BuildData)
     {
+        if ((Graphics as any).nextRoundedRectBehavior)
+        {
+            this._circleBuilder.path(graphicsData, _target);
+
+            return;
+        }
+
         const rrectData = graphicsData.shape as RoundedRectangle;
         const { points } = graphicsData;
         const x = rrectData.x;
@@ -114,37 +123,11 @@ export class RoundedRectangleBuilder implements IShapeBuilder
 
     line(graphicsData: SmoothGraphicsData, target: BuildData): void
     {
-        const { verts, joints } = target;
-        const { points } = graphicsData;
-
-        const joint = points.length === 8 // we dont need joints for arcs
-            ? graphicsData.goodJointType() : JOINT_TYPE.JOINT_MITER + 3;
-        const len = points.length;
-
-        verts.push(points[len - 2], points[len - 1]);
-        joints.push(JOINT_TYPE.NONE);
-        for (let i = 0; i < len; i += 2)
-        {
-            verts.push(points[i], points[i + 1]);
-            joints.push(joint);
-        }
-        verts.push(points[0], points[1]);
-        joints.push(JOINT_TYPE.NONE);
-        verts.push(points[2], points[3]);
-        joints.push(JOINT_TYPE.NONE);
+        this._circleBuilder.line(graphicsData, target);
     }
 
     fill(graphicsData: SmoothGraphicsData, target: BuildData): void
     {
-        const { verts, joints } = target;
-        const { points } = graphicsData;
-
-        graphicsData.triangles = earcut(points, null, 2);
-
-        for (let i = 0, j = points.length; i < j; i++)
-        {
-            verts.push(points[i], points[++i]);
-            joints.push(JOINT_TYPE.FILL);
-        }
+        this._circleBuilder.fill(graphicsData, target);
     }
 }

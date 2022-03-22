@@ -20,6 +20,8 @@ function makeFigures(graphics) {
     graphics.rotation = 0.06
 }
 
+PIXI.smooth.SmoothGraphics.nextRoundedRectBehavior = true;
+
 const graphics = new PIXI.smooth.SmoothGraphics();
 makeFigures(graphics);
 app.stage.addChild(graphics);
