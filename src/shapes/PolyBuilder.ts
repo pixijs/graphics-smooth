@@ -147,7 +147,7 @@ export class PolyBuilder implements IShapeBuilder
     line(graphicsData: SmoothGraphicsData, buildData: BuildData)
     {
         const { closeStroke, points } = graphicsData;
-        const eps = buildData.closePointEps;
+        // const eps = buildData.closePointEps;
         // const eps2 = eps * eps;
         const len = points.length;
         // const style = graphicsData.lineStyle;
@@ -198,31 +198,31 @@ export class PolyBuilder implements IShapeBuilder
             const x1 = points[i]; const
                 y1 = points[i + 1];
 
-            let x2: number; let
-                y2: number;
+            // let x2: number; let
+            //     y2: number;
 
-            if (i + 2 < len)
-            {
-                x2 = points[i + 2];
-                y2 = points[i + 3];
-            }
-            else
-            {
-                x2 = points[0];
-                y2 = points[1];
-            }
+            // if (i + 2 < len)
+            // {
+            //     x2 = points[i + 2];
+            //     y2 = points[i + 3];
+            // }
+            // else
+            // {
+            //     x2 = points[0];
+            //     y2 = points[1];
+            // }
 
-            const dx = x2 - x1;
-            const dy = y2 - y1;
-            let nextX: number; let
-                nextY: number;
+            // const dx = x2 - x1;
+            // const dy = y2 - y1;
+            // let nextX: number; let
+            //     nextY: number;
 
             let endJoint = joint;
 
             if (i + 2 >= len)
             {
-                nextX = points[2];
-                nextY = points[3];
+                // nextX = points[2];
+                // nextY = points[3];
                 if (!closeStroke)
                 {
                     endJoint = JOINT_TYPE.NONE;
@@ -230,8 +230,8 @@ export class PolyBuilder implements IShapeBuilder
             }
             else if (i + 4 >= len)
             {
-                nextX = points[0];
-                nextY = points[1];
+                // nextX = points[0];
+                // nextY = points[1];
                 if (!closeStroke)
                 {
                     if (cap === JOINT_TYPE.CAP_ROUND)
@@ -248,61 +248,15 @@ export class PolyBuilder implements IShapeBuilder
                     }
                 }
             }
-            else
-            {
-                nextX = points[i + 4];
-                nextY = points[i + 5];
-            }
+            // else
+            // {
+            //     nextX = points[i + 4];
+            //     nextY = points[i + 5];
+            // }
 
-            const dx3 = x1 - prevX;
-            const dy3 = y1 - prevY;
+            // const dx3 = x1 - prevX;
+            // const dy3 = y1 - prevY;
 
-            if (joint >= JOINT_TYPE.JOINT_BEVEL && joint <= JOINT_TYPE.JOINT_MITER)
-            {
-                const dx2 = nextX - x2;
-                const dy2 = nextY - y2;
-
-                if (endJoint >= JOINT_TYPE.JOINT_BEVEL
-                    && endJoint <= JOINT_TYPE.JOINT_MITER + 3)
-                {
-                    const D = dx2 * dy - dy2 * dx;
-
-                    if (Math.abs(D) < eps)
-                    {
-                        switch (joint & ~3)
-                        {
-                            case JOINT_TYPE.JOINT_ROUND:
-                                endJoint = JOINT_TYPE.JOINT_CAP_ROUND;
-                                break;
-                            default:
-                                endJoint = JOINT_TYPE.JOINT_CAP_BUTT;
-                                break;
-                        }
-                    }
-                }
-
-                if (joint === JOINT_TYPE.JOINT_MITER)
-                {
-                    let jointAdd = 0;
-
-                    if (dx3 * dx + dy3 * dy > -eps)
-                    {
-                        jointAdd++;
-                    }
-                    if (endJoint === JOINT_TYPE.JOINT_MITER && dx2 * dx + dy2 * dy > -eps)
-                    {
-                        jointAdd += 2;
-                    }
-                    endJoint += jointAdd;
-                }
-            }
-            if (prevCap === 0)
-            {
-                if (Math.abs(dx3 * dy - dy3 * dx) < eps)
-                {
-                    prevCap = JOINT_TYPE.CAP_BUTT2;
-                }
-            }
             endJoint += prevCap;
             prevCap = 0;
 
