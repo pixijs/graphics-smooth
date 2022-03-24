@@ -3,9 +3,12 @@ import type { IShapeBuilder } from '../core/IShapeBuilder';
 import { SmoothGraphicsData } from '../core/SmoothGraphicsData';
 import { BuildData } from '../core/BuildData';
 import { JOINT_TYPE } from '../core/const';
+import { PolyBuilder } from './PolyBuilder';
 
 export class RectangleBuilder implements IShapeBuilder
 {
+    _polyBuilder = new PolyBuilder();
+
     path(graphicsData: SmoothGraphicsData, _target: BuildData)
     {
         // --- //
@@ -54,12 +57,19 @@ export class RectangleBuilder implements IShapeBuilder
 
         triangles.length = 0;
 
-        verts.push(points[0], points[1],
-            points[2], points[3],
-            points[4], points[5],
-            points[6], points[7]);
+        if (!graphicsData.fillAA)
+        {
+            verts.push(points[0], points[1],
+                points[2], points[3],
+                points[4], points[5],
+                points[6], points[7]);
 
-        joints.push(JOINT_TYPE.FILL, JOINT_TYPE.FILL, JOINT_TYPE.FILL, JOINT_TYPE.FILL);
-        triangles.push(0, 1, 2, 0, 2, 3);
+            joints.push(JOINT_TYPE.FILL, JOINT_TYPE.FILL, JOINT_TYPE.FILL, JOINT_TYPE.FILL);
+            triangles.push(0, 1, 2, 0, 2, 3);
+
+            return;
+        }
+
+        this._polyBuilder.fill(graphicsData, target);
     }
 }
