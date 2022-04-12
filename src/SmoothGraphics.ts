@@ -25,6 +25,7 @@ import { LINE_SCALE_MODE, LineStyle } from './core/LineStyle';
 import { SmoothGraphicsShader } from './SmoothShader';
 import { settings } from './settings';
 
+const UnsmoothGraphics = Graphics;
 const { BezierUtils, QuadraticUtils, ArcUtils } = graphicsUtils;
 
 const temp = new Float32Array(3);
@@ -52,11 +53,11 @@ export interface ILineStyleOptions extends IFillStyleOptions {
 export class SmoothGraphics extends Container
 {
     public static get nextRoundedRectBehavior(): boolean {
-        return (Graphics as any).nextRoundedRectBehavior;
+        return (UnsmoothGraphics as any).nextRoundedRectBehavior;
     }
 
     public static set nextRoundedRectBehavior(value: boolean) {
-        (Graphics as any).nextRoundedRectBehavior = value;
+        (UnsmoothGraphics as any).nextRoundedRectBehavior = value;
     }
 
     static _TEMP_POINT = new Point();
@@ -573,7 +574,7 @@ export class SmoothGraphics extends Container
 
     protected _renderCanvas(renderer: any): void
     {
-        (Graphics.prototype as any)._renderCanvas.call(this, renderer);
+        (UnsmoothGraphics.prototype as any)._renderCanvas.call(this, renderer);
     }
 
     protected _render(renderer: Renderer): void
