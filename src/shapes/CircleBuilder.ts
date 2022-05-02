@@ -151,6 +151,11 @@ export class CircleBuilder implements IShapeBuilder
         const { verts, joints } = target;
         const { points, triangles } = graphicsData;
 
+        if (points.length === 0)
+        {
+            return;
+        }
+
         let x;
         let y;
 
@@ -277,6 +282,11 @@ export class CircleBuilder implements IShapeBuilder
         const joint = points.length === 8 // we dont need joints for arcs
             ? graphicsData.goodJointType() : JOINT_TYPE.JOINT_MITER + 3;
         const len = points.length;
+
+        if (len === 0)
+        {
+            return;
+        }
 
         verts.push(points[len - 2], points[len - 1]);
         joints.push(JOINT_TYPE.NONE);
