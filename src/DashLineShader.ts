@@ -1,4 +1,4 @@
-import { SmoothGraphicsProgram, SmoothGraphicsShader } from './SmoothShader';
+import { SmoothGraphicsShader } from './SmoothShader';
 
 const dashFrag = `%PRECISION%
 varying vec4 vColor;
@@ -52,7 +52,7 @@ export class DashLineShader extends SmoothGraphicsShader
     {
         const settings = { maxStyles: 16, maxTextures: 1, pixelLine: 1 };
 
-        super(settings, new SmoothGraphicsProgram(settings, undefined, dashFrag),
+        super(settings, undefined, dashFrag,
             dashParams || {
                 dash: 8.0,
                 gap: 5.0

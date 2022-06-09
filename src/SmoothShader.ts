@@ -446,37 +446,18 @@ if (vType < 0.5) {
 }
 `;
 
-export class SmoothGraphicsProgram extends Program
+export class SmoothGraphicsShader extends Shader
 {
     settings: IGraphicsBatchSettings;
 
     constructor(settings: IGraphicsBatchSettings,
         vert = smoothVert,
         frag = smoothFrag,
-        _uniforms = {})
+        uniforms = {})
     {
-        const { maxStyles, maxTextures, pixelLine } = settings;
+        vert = SmoothGraphicsShader.generateVertexSrc(settings, vert);
+        frag = SmoothGraphicsShader.generateFragmentSrc(settings, frag);
 
-        vert = vert.replace(/%MAX_TEXTURES%/gi, `${maxTextures}`)
-            .replace(/%MAX_STYLES%/gi, `${maxStyles}`);
-        frag = frag.replace(/%PRECISION%/gi, precision)
-            .replace(/%PIXEL_LINE%/gi, pixelLineFunc[pixelLine])
-            .replace(/%PIXEL_COVERAGE%/gi, pixelCoverage)
-            .replace(/%MAX_TEXTURES%/gi, `${maxTextures}`)
-            // eslint-disable-next-line @typescript-eslint/no-use-before-define
-            .replace(/%FOR_LOOP%/gi, SmoothGraphicsShader.generateSampleSrc(maxTextures));
-
-        super(vert, frag);
-        this.settings = settings;
-    }
-}
-
-export class SmoothGraphicsShader extends Shader
-{
-    settings: IGraphicsBatchSettings;
-
-    constructor(settings: IGraphicsBatchSettings, prog = new SmoothGraphicsProgram(settings), uniforms = {})
-    {
         const { maxStyles, maxTextures } = settings;
         const sampleValues = new Int32Array(maxTextures);
 
@@ -484,7 +465,7 @@ export class SmoothGraphicsShader extends Shader
         {
             sampleValues[i] = i;
         }
-        super(prog, (Object as any).assign(uniforms, {
+        super(Program.from(vert, frag), (Object as any).assign(uniforms, {
             styleMatrix: new Float32Array(6 * maxStyles),
             styleTextureId: new Float32Array(maxStyles),
             styleLine: new Float32Array(2 * maxStyles),
@@ -495,6 +476,29 @@ export class SmoothGraphicsShader extends Shader
             expand: 1,
         }));
         this.settings = settings;
+    }
+
+    static generateVertexSrc(settings: IGraphicsBatchSettings, vertexSrc = smoothVert): string
+    {
+        const { maxStyles, maxTextures } = settings;
+
+        vertexSrc = vertexSrc.replace(/%MAX_TEXTURES%/gi, `${maxTextures}`)
+            .replace(/%MAX_STYLES%/gi, `${maxStyles}`);
+
+        return vertexSrc;
+    }
+
+    static generateFragmentSrc(settings: IGraphicsBatchSettings, fragmentSrc = smoothFrag): string
+    {
+        const { maxTextures, pixelLine } = settings;
+
+        fragmentSrc = fragmentSrc.replace(/%PRECISION%/gi, precision)
+            .replace(/%PIXEL_LINE%/gi, pixelLineFunc[pixelLine])
+            .replace(/%PIXEL_COVERAGE%/gi, pixelCoverage)
+            .replace(/%MAX_TEXTURES%/gi, `${maxTextures}`)
+            .replace(/%FOR_LOOP%/gi, this.generateSampleSrc(maxTextures));
+
+        return fragmentSrc;
     }
 
     static generateSampleSrc(maxTextures: number): string
