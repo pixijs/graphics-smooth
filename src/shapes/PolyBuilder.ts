@@ -335,7 +335,7 @@ export class PolyBuilder implements IShapeBuilder
                 }
             }
             pn[start * 2] = finish - 1;
-            pn[(finish - 1) * 2 + 1] = 0;
+            pn[(finish - 1) * 2 + 1] = start;
             for (let j = start; j + 1 < finish; j++)
             {
                 pn[j * 2 + 1] = j + 1;
