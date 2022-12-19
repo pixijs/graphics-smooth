@@ -707,8 +707,9 @@ export class SmoothGraphics extends Container
 
             uniforms.resolution *= scale;
         }
+        const gl = (renderer.context as any).gl;
 
-        uniforms.expand = (renderer.options.antialias ? 2 : 1) / uniforms.resolution;
+        uniforms.expand = (gl.getContextAttributes().antialias ? 2 : 1) / uniforms.resolution;
 
         // the first draw call, we can set the uniforms of the shader directly here.
 
