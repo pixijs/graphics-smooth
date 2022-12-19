@@ -14,7 +14,7 @@ import { Texture, State, Renderer, Shader } from '@pixi/core';
 import { graphicsUtils, LINE_JOIN, LINE_CAP, Graphics } from '@pixi/graphics';
 import { hex2rgb } from '@pixi/utils';
 import { SmoothGraphicsGeometry } from './SmoothGraphicsGeometry';
-import { BLEND_MODES, DRAW_MODES } from '@pixi/constants';
+import { BLEND_MODES, DRAW_MODES, MSAA_QUALITY } from '@pixi/constants';
 import { Container } from '@pixi/display';
 
 import type { IShape, IPointData } from '@pixi/math';
@@ -699,9 +699,11 @@ export class SmoothGraphics extends Container
 
             uniforms.resolution *= scale;
         }
-        const gl = (renderer.context as any).gl;
 
-        uniforms.expand = (gl.getContextAttributes().antialias ? 2 : 1) / uniforms.resolution;
+        const multisample = renderer.renderTexture.current
+            ? renderer.renderTexture.current.multisample : renderer.multisample;
+
+        uniforms.expand = (multisample !== MSAA_QUALITY.NONE ? 2 : 1) / uniforms.resolution;
 
         // the first draw call, we can set the uniforms of the shader directly here.
 
