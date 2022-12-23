@@ -6,7 +6,7 @@ const app = new PIXI.Application({
 document.body.appendChild(app.view);
 
 function makeFigures(graphics) {
-    const bg = app.loader.resources['bg'].texture;
+    const bg = PIXI.Assets.get('bg');
 // Rectangle
     for (let i = 0; i < 4; i++) {
         const x = i * 150 + 20;
@@ -20,8 +20,8 @@ function makeFigures(graphics) {
     }
 }
 
-app.loader.add('bg', 'https://pixijs.io/examples/examples/assets/bg_rotate.jpg');
-app.loader.load(() => {
+PIXI.Assets.add('bg', 'https://pixijs.io/examples/examples/assets/bg_rotate.jpg');
+PIXI.Assets.load('bg').then(() => {
     const graphics = new PIXI.smooth.SmoothGraphics();
     makeFigures(graphics);
     app.stage.addChild(graphics);

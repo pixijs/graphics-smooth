@@ -1,3 +1,6 @@
+/**
+ * @memberof PIXI.smooth
+ */
 export class BuildData
 {
     verts: Array<number> = [];

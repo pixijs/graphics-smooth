@@ -446,6 +446,9 @@ if (vType < 0.5) {
 }
 `;
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class SmoothGraphicsShader extends Shader
 {
     settings: IGraphicsBatchSettings;

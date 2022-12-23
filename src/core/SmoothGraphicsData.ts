@@ -1,4 +1,4 @@
-import type { Matrix, SHAPES, IShape } from '@pixi/math';
+import type { Matrix, SHAPES, IShape } from '@pixi/core';
 import { LINE_CAP, LINE_JOIN } from '@pixi/graphics';
 import { JOINT_TYPE } from './const';
 import { FillStyle } from './FillStyle';
@@ -7,8 +7,7 @@ import { LineStyle } from './LineStyle';
 /**
  * A class to contain data useful for Graphics objects
  *
- * @class
- * @memberof PIXI
+ * @memberof PIXI.smooth
  */
 export class SmoothGraphicsData
 {
@@ -100,7 +99,8 @@ export class SmoothGraphicsData
         return cap;
     }
 
-    public goodJointType() {
+    public goodJointType()
+    {
         let joint: number;
 
         switch (this.lineStyle.join)

@@ -1,4 +1,5 @@
-export enum JOINT_TYPE {
+export enum JOINT_TYPE
+    {
     NONE = 0,
     FILL = 1,
     JOINT_BEVEL = 4,

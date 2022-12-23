@@ -1,23 +1,30 @@
-import { Matrix } from '@pixi/math';
-import { BaseTexture, BatchTextureArray, Shader, Texture } from '@pixi/core';
-import { BLEND_MODES } from '@pixi/constants';
-
-export interface IGraphicsBatchSettings {
+import { Matrix, BaseTexture, BatchTextureArray, Shader, Texture, BLEND_MODES } from '@pixi/core';
+/**
+ * @memberof PIXI.smooth
+ */
+export interface IGraphicsBatchSettings
+{
     maxStyles: number;
     maxTextures: number;
     pixelLine: number;
 }
 
+/**
+ * @memberof PIXI.smooth
+ */
 export function matrixEquals(th: Matrix, matrix: Matrix, eps = 1e-3)
 {
-    return this === matrix || Math.abs(th.a - matrix.a) < eps
+    return this === matrix || (Math.abs(th.a - matrix.a) < eps
         && Math.abs(th.b - matrix.b) < eps
         && Math.abs(th.c - matrix.c) < eps
         && Math.abs(th.d - matrix.d) < eps
         && Math.abs(th.tx - matrix.tx) < eps
-        && Math.abs(th.ty - matrix.ty) < eps;
+        && Math.abs(th.ty - matrix.ty) < eps);
 }
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class BatchStyleArray
 {
     public textureIds: number[];
@@ -74,6 +81,9 @@ export class BatchStyleArray
     }
 }
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class BatchDrawCall
 {
     texArray: BatchTextureArray;

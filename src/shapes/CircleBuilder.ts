@@ -1,12 +1,15 @@
 // for type only
-import { SHAPES } from '@pixi/math';
+import { SHAPES } from '@pixi/core';
 
-import type { Circle, Ellipse, RoundedRectangle } from '@pixi/math';
+import type { Circle, Ellipse, RoundedRectangle } from '@pixi/core';
 import type { IShapeBuilder } from '../core/IShapeBuilder';
 import { SmoothGraphicsData } from '../core/SmoothGraphicsData';
 import { BuildData } from '../core/BuildData';
 import { JOINT_TYPE } from '../core/const';
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class CircleBuilder implements IShapeBuilder
 {
     path(graphicsData: SmoothGraphicsData, _target: BuildData)
@@ -215,7 +218,7 @@ export class CircleBuilder implements IShapeBuilder
 
         let nx1 = y1 - points[len - 3];
         let ny1 = points[len - 4] - x1;
-        const n1 = Math.sqrt(nx1 * nx1 + ny1 * ny1);
+        const n1 = Math.sqrt((nx1 * nx1) + (ny1 * ny1));
 
         nx1 /= n1;
         ny1 /= n1;
@@ -230,14 +233,14 @@ export class CircleBuilder implements IShapeBuilder
 
             let nx2 = y2 - y1;
             let ny2 = x1 - x2;
-            const n2 = Math.sqrt(nx2 * nx2 + ny2 * ny2);
+            const n2 = Math.sqrt((nx2 * nx2) + (ny2 * ny2));
 
             nx2 /= n2;
             ny2 /= n2;
 
             let bx2 = nx1 + nx2;
             let by2 = ny1 + ny2;
-            const b2 = nx2 * bx2 + ny2 * by2;
+            const b2 = (nx2 * bx2) + (ny2 * by2);
 
             bx2 /= b2;
             by2 /= b2;

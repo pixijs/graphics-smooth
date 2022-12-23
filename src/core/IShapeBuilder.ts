@@ -1,7 +1,11 @@
 import { SmoothGraphicsData } from './SmoothGraphicsData';
 import { BuildData } from './BuildData';
 
-export interface IShapeBuilder {
+/**
+ * @memberof PIXI.smooth
+ */
+export interface IShapeBuilder
+{
     path(graphicsData: SmoothGraphicsData, target: BuildData): void;
 
     line(graphicsData: SmoothGraphicsData, target: BuildData): void;

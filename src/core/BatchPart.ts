@@ -1,6 +1,9 @@
 import { LineStyle } from './LineStyle';
 import { FillStyle } from './FillStyle';
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class BatchPart
 {
     public style: LineStyle | FillStyle;

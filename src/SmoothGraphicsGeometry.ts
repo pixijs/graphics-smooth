@@ -5,15 +5,18 @@ import { FILL_COMMANDS } from './shapes';
 import {
     Buffer,
     Geometry,
-    Texture
+    Texture,
+    WRAP_MODES,
+    TYPES,
+    utils,
+    SHAPES,
+    Point,
+    Matrix,
 } from '@pixi/core';
 
-import { WRAP_MODES, TYPES } from '@pixi/constants';
-import { SHAPES, Point, Matrix } from '@pixi/math';
-import { premultiplyTint } from '@pixi/utils';
 import { Bounds } from '@pixi/display';
 
-import type { Circle, Ellipse, Polygon, Rectangle, RoundedRectangle, IPointData } from '@pixi/math';
+import type { Circle, Ellipse, Polygon, Rectangle, RoundedRectangle, IPointData } from '@pixi/core';
 import { BuildData } from './core/BuildData';
 import { SegmentPacker } from './core/SegmentPacker';
 import { LineStyle } from './core/LineStyle';
@@ -33,6 +36,9 @@ export const DRAW_CALL_POOL: Array<BatchDrawCall> = [];
 const tmpPoint = new Point();
 const tmpBounds = new Bounds();
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class SmoothGraphicsGeometry extends Geometry
 {
     public static BATCHABLE_SIZE = 100;
@@ -410,6 +416,7 @@ export class SmoothGraphicsGeometry extends Geometry
                 for (let i = 0; i < holes.length; i++)
                 {
                     const hole = holes[i];
+
                     FILL_COMMANDS[hole.type].line(hole, buildData);
                 }
                 data.strokeLen = buildData.joints.length - data.strokeStart;
@@ -774,7 +781,7 @@ export class SmoothGraphicsGeometry extends Geometry
             const { color, alpha } = style;
             const rgb = (color >> 16) + (color & 0xff00) + ((color & 0xff) << 16);
 
-            batchData.rgba = premultiplyTint(rgb, alpha);
+            batchData.rgba = utils.premultiplyTint(rgb, alpha);
             batchData.styleId = styleId;
         }
     }

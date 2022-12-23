@@ -1,10 +1,13 @@
-import type { Rectangle } from '@pixi/math';
+import type { Rectangle } from '@pixi/core';
 import type { IShapeBuilder } from '../core/IShapeBuilder';
 import { SmoothGraphicsData } from '../core/SmoothGraphicsData';
 import { BuildData } from '../core/BuildData';
 import { JOINT_TYPE } from '../core/const';
 import { PolyBuilder } from './PolyBuilder';
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class RectangleBuilder implements IShapeBuilder
 {
     _polyBuilder = new PolyBuilder();
