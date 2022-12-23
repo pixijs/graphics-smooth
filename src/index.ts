@@ -1,5 +1,3 @@
-import './mixins/ContextSystem';
-
 export * from './core/BatchDrawCall';
 export * from './core/BatchPart';
 export * from './core/LineStyle';
@@ -17,6 +15,11 @@ export * from './SmoothShader';
 export * from './DashLineShader';
 
 export * from './settings';
+
+/**
+ * Browser namespace for PixiJS.
+ * @namespace PIXI
+ */
 
 /**
  * Browser namespace for SmoothGraphics.

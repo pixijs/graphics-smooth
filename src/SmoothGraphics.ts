@@ -15,6 +15,7 @@ import {
     Shader,
     BLEND_MODES,
     DRAW_MODES,
+    MSAA_QUALITY,
 } from '@pixi/core';
 
 import { graphicsUtils, LINE_JOIN, LINE_CAP, Graphics } from '@pixi/graphics';
@@ -23,7 +24,6 @@ import { Container } from '@pixi/display';
 
 import type { IShape, IPointData } from '@pixi/core';
 import type { IDestroyOptions } from '@pixi/display';
-import type { ContextSystemPatched } from './mixins/ContextSystem';
 import { IGraphicsBatchSettings } from './core/BatchDrawCall';
 import { FillStyle } from './core/FillStyle';
 import { LINE_SCALE_MODE, LineStyle } from './core/LineStyle';
@@ -62,16 +62,6 @@ export interface ILineStyleOptions extends IFillStyleOptions
  */
 export class SmoothGraphics extends Container
 {
-    public static get nextRoundedRectBehavior(): boolean
-    {
-        return (UnsmoothGraphics as any).nextRoundedRectBehavior;
-    }
-
-    public static set nextRoundedRectBehavior(value: boolean)
-    {
-        (UnsmoothGraphics as any).nextRoundedRectBehavior = value;
-    }
-
     static _TEMP_POINT = new Point();
 
     public shader: Shader;
@@ -720,7 +710,10 @@ export class SmoothGraphics extends Container
             uniforms.resolution *= scale;
         }
 
-        uniforms.expand = ((renderer.context as ContextSystemPatched).antialias ? 2 : 1) / uniforms.resolution;
+        const multisample = renderer.renderTexture.current
+            ? renderer.renderTexture.current.multisample : renderer.multisample;
+
+        uniforms.expand = (multisample !== MSAA_QUALITY.NONE ? 2 : 1) / uniforms.resolution;
 
         // the first draw call, we can set the uniforms of the shader directly here.
 
