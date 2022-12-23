@@ -1,0 +1,45 @@
+
+{
+    "tags": {
+      "allowUnknownTags": false
+    },
+    "source": {
+      "include": [
+        "src/**/*.ts"
+      ]
+    },
+    "plugins": [
+      "plugins/markdown"
+    ],
+    "template": {
+      "readme": "./README.md",
+      "repository": "https://github.com/pixijs/graphics-smooth/"
+    },
+    "templates": {
+      "cleverLinks": false,
+      "monospaceLinks": false,
+      "default": {
+        "outputSourceFiles": false
+      },
+      "applicationName": "PixiJS Graphics Smooth",
+      "copyright": "Copyright &copy; 2015 - 2022 Ivan Popelyshev",
+      "linenums": false,
+      "meta": {
+        "title": "PixiJS Graphics Smooth API Documentation",
+        "description": "Documentation for PixiJS Smooth library",
+        "keyword": "docs, documentation, pixi, pixijs, rendering, graphics, display, antialias, javascript"
+      }
+    },
+    "markdown": {
+      "parser": "gfm",
+      "hardwrap": false
+    },
+    "opts": {
+      "encoding": "utf8",
+      "recurse": true,
+      "private": false,
+      "lenient": true,
+      "destination": "docs",
+      "template": "@pixi/webdoc-template"
+    }
+  }

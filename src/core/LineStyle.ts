@@ -1,7 +1,8 @@
 import { LINE_CAP, LINE_JOIN } from '@pixi/graphics';
 import { FillStyle } from './FillStyle';
 
-export enum LINE_SCALE_MODE {
+export enum LINE_SCALE_MODE
+    {
     NONE = 'none',
     NORMAL = 'normal',
     HORIZONTAL = 'horizontal',

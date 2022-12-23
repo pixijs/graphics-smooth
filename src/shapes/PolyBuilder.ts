@@ -2,8 +2,7 @@ import type { IShapeBuilder } from '../core/IShapeBuilder';
 import { SmoothGraphicsData } from '../core/SmoothGraphicsData';
 import { BuildData } from '../core/BuildData';
 import { JOINT_TYPE } from '../core/const';
-import { Point, Polygon } from '@pixi/math';
-import { earcut } from '@pixi/utils';
+import { Point, Polygon, utils } from '@pixi/core';
 
 const tempArr: Array<number> = [];
 
@@ -70,8 +69,10 @@ export class PolyBuilder implements IShapeBuilder
         // 1. remove equal points
         for (let i = 2; i < len; i += 2)
         {
-            const x1 = points[i - 2]; const y1 = points[i - 1]; const x2 = points[i]; const
-                y2 = points[i + 1];
+            const x1 = points[i - 2];
+            const y1 = points[i - 1];
+            const x2 = points[i];
+            const y2 = points[i + 1];
             let flag = true;
 
             if (Math.abs(x1 - x2) < eps
@@ -93,9 +94,12 @@ export class PolyBuilder implements IShapeBuilder
         // 2. remove middle points
         for (let i = 2; i + 2 < len; i += 2)
         {
-            let x1 = points[i - 2]; let y1 = points[i - 1]; const x2 = points[i]; const y2 = points[i + 1];
-            let x3 = points[i + 2]; let
-                y3 = points[i + 3];
+            let x1 = points[i - 2];
+            let y1 = points[i - 1];
+            const x2 = points[i];
+            const y2 = points[i + 1];
+            let x3 = points[i + 2];
+            let y3 = points[i + 3];
 
             x1 -= x2;
             y1 -= y2;
@@ -103,9 +107,9 @@ export class PolyBuilder implements IShapeBuilder
             y3 -= y2;
             let flag = true;
 
-            if (Math.abs(x3 * y1 - y3 * x1) < eps2)
+            if (Math.abs((x3 * y1) - (y3 * x1)) < eps2)
             {
-                if (x1 * x3 + y1 * y3 < -eps2)
+                if ((x1 * x3) + (y1 * y3) < -eps2)
                 {
                     flag = false;
                 }
@@ -335,17 +339,17 @@ export class PolyBuilder implements IShapeBuilder
                 }
             }
             pn[start * 2] = finish - 1;
-            pn[(finish - 1) * 2 + 1] = start;
+            pn[((finish - 1) * 2) + 1] = start;
             for (let j = start; j + 1 < finish; j++)
             {
-                pn[j * 2 + 1] = j + 1;
-                pn[j * 2 + 2] = j;
+                pn[(j * 2) + 1] = j + 1;
+                pn[(j * 2) + 2] = j;
             }
             start = finish;
         }
 
         // sort color
-        graphicsData.triangles = earcut(points, holeArray, 2);
+        graphicsData.triangles = utils.earcut(points, holeArray, 2);
 
         if (!graphicsData.triangles)
         {
@@ -375,9 +379,9 @@ export class PolyBuilder implements IShapeBuilder
             for (let j = 0; j < 3; j++)
             {
                 const ind1 = triangles[i + j];
-                const ind2 = triangles[i + (j + 1) % 3];
+                const ind2 = triangles[i + ((j + 1) % 3)];
 
-                if (pn[ind1 * 2] === ind2 || pn[ind1 * 2 + 1] === ind2)
+                if (pn[ind1 * 2] === ind2 || pn[(ind1 * 2) + 1] === ind2)
                 {
                     flag |= (1 << j);
                 }
@@ -394,23 +398,23 @@ export class PolyBuilder implements IShapeBuilder
         for (let ind = 0; ind < len / 2; ind++)
         {
             const prev = pn[ind * 2];
-            const next = pn[ind * 2 + 1];
-            let nx1 = (points[next * 2 + 1] - points[ind * 2 + 1]); let
+            const next = pn[(ind * 2) + 1];
+            let nx1 = (points[(next * 2) + 1] - points[(ind * 2) + 1]); let
                 ny1 = -(points[next * 2] - points[ind * 2]);
-            let nx2 = (points[ind * 2 + 1] - points[prev * 2 + 1]); let
+            let nx2 = (points[(ind * 2) + 1] - points[(prev * 2) + 1]); let
                 ny2 = -(points[ind * 2] - points[prev * 2]);
-            const D1 = Math.sqrt(nx1 * nx1 + ny1 * ny1);
+            const D1 = Math.sqrt((nx1 * nx1) + (ny1 * ny1));
 
             nx1 /= D1;
             ny1 /= D1;
-            const D2 = Math.sqrt(nx2 * nx2 + ny2 * ny2);
+            const D2 = Math.sqrt((nx2 * nx2) + (ny2 * ny2));
 
             nx2 /= D2;
             ny2 /= D2;
 
             let bx = (nx1 + nx2);
             let by = (ny1 + ny2);
-            const D = bx * nx1 + by * ny1;
+            const D = (bx * nx1) + (by * ny1);
 
             if (Math.abs(D) < eps)
             {
@@ -423,7 +427,7 @@ export class PolyBuilder implements IShapeBuilder
                 by /= D;
             }
             pn[ind * 2] = bx;
-            pn[ind * 2 + 1] = by;
+            pn[(ind * 2) + 1] = by;
         }
 
         for (let i = 0; i < triangles.length; i += 3)
@@ -431,29 +435,29 @@ export class PolyBuilder implements IShapeBuilder
             const prev = triangles[i];
             const ind = triangles[i + 1];
             const next = triangles[i + 2];
-            const nx1 = (points[next * 2 + 1] - points[ind * 2 + 1]); const
+            const nx1 = (points[(next * 2) + 1] - points[(ind * 2) + 1]); const
                 ny1 = -(points[next * 2] - points[ind * 2]);
-            const nx2 = (points[ind * 2 + 1] - points[prev * 2 + 1]); const
+            const nx2 = (points[(ind * 2) + 1] - points[(prev * 2) + 1]); const
                 ny2 = -(points[ind * 2] - points[prev * 2]);
 
             let j1 = 1;
 
-            if (nx1 * ny2 - nx2 * ny1 > 0.0)
+            if ((nx1 * ny2) - (nx2 * ny1) > 0.0)
             {
                 j1 = 2;
             }
 
             for (let j = 0; j < 3; j++)
             {
-                const ind = triangles[i + (j * j1) % 3];
+                const ind = triangles[i + ((j * j1) % 3)];
 
-                verts.push(points[ind * 2], points[ind * 2 + 1]);
+                verts.push(points[ind * 2], points[(ind * 2) + 1]);
             }
             for (let j = 0; j < 3; j++)
             {
-                const ind = triangles[i + (j * j1) % 3];
+                const ind = triangles[i + ((j * j1) % 3)];
 
-                verts.push(pn[ind * 2], pn[ind * 2 + 1]);
+                verts.push(pn[ind * 2], pn[(ind * 2) + 1]);
             }
         }
     }

@@ -1,4 +1,4 @@
-import { SHAPES } from '@pixi/math';
+import { SHAPES } from '@pixi/core';
 import { IShapeBuilder } from '../core/IShapeBuilder';
 import { CircleBuilder } from './CircleBuilder';
 import { RectangleBuilder } from './RectangleBuilder';

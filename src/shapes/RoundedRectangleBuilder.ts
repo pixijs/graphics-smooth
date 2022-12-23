@@ -2,7 +2,7 @@ import type { IShapeBuilder } from '../core/IShapeBuilder';
 import { SmoothGraphicsData } from '../core/SmoothGraphicsData';
 import { BuildData } from '../core/BuildData';
 import { Graphics } from '@pixi/graphics';
-import { RoundedRectangle } from '@pixi/math';
+import { RoundedRectangle } from '@pixi/core';
 import { CircleBuilder } from './CircleBuilder';
 
 function getPt(n1: number, n2: number, perc: number): number

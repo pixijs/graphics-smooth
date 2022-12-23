@@ -41,7 +41,8 @@ void main(void){
 }
 `;
 
-export interface IDashParams {
+export interface IDashParams
+{
     dash: number;
     gap: number;
 }

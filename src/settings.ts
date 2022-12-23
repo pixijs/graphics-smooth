@@ -1,6 +1,7 @@
 import { LINE_SCALE_MODE } from './core/LineStyle';
 
-export interface ISettings {
+export interface ISettings
+{
     LINE_SCALE_MODE: string;
     SHADER_MAX_STYLES: number;
     SHADER_MAX_TEXTURES: number;

@@ -8,17 +8,22 @@ import {
     RoundedRectangle,
     Matrix,
     SHAPES,
-} from '@pixi/math';
+    utils,
+    Texture,
+    State,
+    Renderer,
+    Shader,
+    BLEND_MODES,
+    DRAW_MODES,
+} from '@pixi/core';
 
-import { Texture, State, Renderer, Shader } from '@pixi/core';
 import { graphicsUtils, LINE_JOIN, LINE_CAP, Graphics } from '@pixi/graphics';
-import { hex2rgb } from '@pixi/utils';
 import { SmoothGraphicsGeometry } from './SmoothGraphicsGeometry';
-import { BLEND_MODES, DRAW_MODES } from '@pixi/constants';
 import { Container } from '@pixi/display';
 
-import type { IShape, IPointData } from '@pixi/math';
+import type { IShape, IPointData } from '@pixi/core';
 import type { IDestroyOptions } from '@pixi/display';
+import type { ContextSystemPatched } from './mixins/ContextSystem';
 import { IGraphicsBatchSettings } from './core/BatchDrawCall';
 import { FillStyle } from './core/FillStyle';
 import { LINE_SCALE_MODE, LineStyle } from './core/LineStyle';
@@ -32,7 +37,8 @@ const temp = new Float32Array(3);
 // a default shaders map used by graphics..
 const DEFAULT_SHADERS: { [key: string]: Shader } = {};
 
-export interface IFillStyleOptions {
+export interface IFillStyleOptions
+{
     color?: number;
     alpha?: number;
     texture?: Texture;
@@ -41,7 +47,8 @@ export interface IFillStyleOptions {
     shader?: Shader;
 }
 
-export interface ILineStyleOptions extends IFillStyleOptions {
+export interface ILineStyleOptions extends IFillStyleOptions
+{
     width?: number;
     alignment?: number;
     scaleMode?: LINE_SCALE_MODE;
@@ -52,11 +59,13 @@ export interface ILineStyleOptions extends IFillStyleOptions {
 
 export class SmoothGraphics extends Container
 {
-    public static get nextRoundedRectBehavior(): boolean {
+    public static get nextRoundedRectBehavior(): boolean
+    {
         return (UnsmoothGraphics as any).nextRoundedRectBehavior;
     }
 
-    public static set nextRoundedRectBehavior(value: boolean) {
+    public static set nextRoundedRectBehavior(value: boolean)
+    {
         (UnsmoothGraphics as any).nextRoundedRectBehavior = value;
     }
 
@@ -494,8 +503,8 @@ export class SmoothGraphics extends Container
         return this.drawShape(new Ellipse(x, y, width, height));
     }
 
-    public drawPolygon(...path: Array<number> | Array<Point>): this
-    public drawPolygon(path: Array<number> | Array<Point> | Polygon): this
+    public drawPolygon(...path: Array<number> | Array<Point>): this;
+    public drawPolygon(path: Array<number> | Array<Point> | Polygon): this;
 
     public drawPolygon(...path: any[]): this
     {
@@ -642,7 +651,7 @@ export class SmoothGraphics extends Container
                 blendMode,
                 // indices,
                 // uvs,
-                _batchRGB: hex2rgb(color) as Array<number>,
+                _batchRGB: utils.hex2rgb(color) as Array<number>,
                 _tintRGB: color,
                 _texture: gI.style.texture,
                 alpha: gI.style.alpha,
@@ -703,12 +712,12 @@ export class SmoothGraphics extends Container
         if (projTrans)
         {
             // only uniform scale is supported!
-            const scale = Math.sqrt(projTrans.a * projTrans.a + projTrans.b * projTrans.b);
+            const scale = Math.sqrt((projTrans.a * projTrans.a) + (projTrans.b * projTrans.b));
 
             uniforms.resolution *= scale;
         }
 
-        uniforms.expand = (renderer.options.antialias ? 2 : 1) / uniforms.resolution;
+        uniforms.expand = ((renderer.context as ContextSystemPatched).antialias ? 2 : 1) / uniforms.resolution;
 
         // the first draw call, we can set the uniforms of the shader directly here.
 
@@ -841,7 +850,7 @@ export class SmoothGraphics extends Container
         {
             this.batchTint = this.tint;
 
-            const tintRGB = hex2rgb(this.tint, temp);
+            const tintRGB = utils.hex2rgb(this.tint, temp);
 
             for (let i = 0; i < this.batches.length; i++)
             {

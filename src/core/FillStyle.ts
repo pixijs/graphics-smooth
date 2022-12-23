@@ -1,5 +1,5 @@
 import { Shader, Texture } from '@pixi/core';
-import type { Matrix } from '@pixi/math';
+import type { Matrix } from '@pixi/core';
 
 export class FillStyle
 {

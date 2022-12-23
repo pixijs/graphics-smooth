@@ -1,3 +1,5 @@
+import './mixins/ContextSystem';
+
 export * from './core/BatchDrawCall';
 export * from './core/BatchPart';
 export * from './core/LineStyle';
