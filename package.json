@@ -93,6 +93,8 @@
     "@pixi/display": "^7.0.0",
     "@pixi/eslint-config": "^4.0.1",
     "@pixi/graphics": "^7.0.0",
+    "@pixi/webdoc-template": "^1.5.5",
+    "@webdoc/cli": "^2.2.0",
     "clean-package": "^1.0.1",
     "cross-env": "^7.0.3",
     "eslint": "^8.30.0",

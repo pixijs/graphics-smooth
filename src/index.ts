@@ -17,3 +17,9 @@ export * from './SmoothShader';
 export * from './DashLineShader';
 
 export * from './settings';
+
+/**
+ * Browser namespace for SmoothGraphics.
+ * @namespace smooth
+ * @memberof PIXI
+ */

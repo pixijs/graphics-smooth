@@ -45,6 +45,9 @@ function fixOrientation(points: number[], hole = false)
     }
 }
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class PolyBuilder implements IShapeBuilder
 {
     path(graphicsData: SmoothGraphicsData, buildData: BuildData)

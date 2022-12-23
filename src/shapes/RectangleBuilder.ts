@@ -5,6 +5,9 @@ import { BuildData } from '../core/BuildData';
 import { JOINT_TYPE } from '../core/const';
 import { PolyBuilder } from './PolyBuilder';
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class RectangleBuilder implements IShapeBuilder
 {
     _polyBuilder = new PolyBuilder();

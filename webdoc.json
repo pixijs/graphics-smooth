@@ -21,12 +21,12 @@
       "default": {
         "outputSourceFiles": false
       },
-      "applicationName": "PixiJS Graphics Smooth",
+      "applicationName": "PixiJS Smooth Graphics",
       "copyright": "Copyright &copy; 2015 - 2022 Ivan Popelyshev",
       "linenums": false,
       "meta": {
-        "title": "PixiJS Graphics Smooth API Documentation",
-        "description": "Documentation for PixiJS Smooth library",
+        "title": "PixiJS Smooth Graphics API Documentation",
+        "description": "Documentation for PixiJS Smooth Graphics library",
         "keyword": "docs, documentation, pixi, pixijs, rendering, graphics, display, antialias, javascript"
       }
     },

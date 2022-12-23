@@ -57,6 +57,9 @@ function quadraticBezierCurve(
     return points;
 }
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class RoundedRectangleBuilder implements IShapeBuilder
 {
     _circleBuilder = new CircleBuilder();

@@ -7,8 +7,7 @@ import { LineStyle } from './LineStyle';
 /**
  * A class to contain data useful for Graphics objects
  *
- * @class
- * @memberof PIXI
+ * @memberof PIXI.smooth
  */
 export class SmoothGraphicsData
 {

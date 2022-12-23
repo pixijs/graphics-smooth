@@ -1,6 +1,9 @@
 import { BuildData } from './BuildData';
 import { JOINT_TYPE } from './const';
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class SegmentPacker
 {
     static vertsByJoint: Array<number> = [];

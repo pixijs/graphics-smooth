@@ -36,6 +36,9 @@ export const DRAW_CALL_POOL: Array<BatchDrawCall> = [];
 const tmpPoint = new Point();
 const tmpBounds = new Bounds();
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class SmoothGraphicsGeometry extends Geometry
 {
     public static BATCHABLE_SIZE = 100;

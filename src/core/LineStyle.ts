@@ -1,6 +1,9 @@
 import { LINE_CAP, LINE_JOIN } from '@pixi/graphics';
 import { FillStyle } from './FillStyle';
 
+/**
+ * @memberof PIXI.smooth
+ */
 export enum LINE_SCALE_MODE
     {
     NONE = 'none',
@@ -9,6 +12,9 @@ export enum LINE_SCALE_MODE
     VERTICAL = 'vertical',
 }
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class LineStyle extends FillStyle
 {
     width: number;

@@ -41,12 +41,18 @@ void main(void){
 }
 `;
 
+/**
+ * @memberof PIXI.smooth
+ */
 export interface IDashParams
 {
     dash: number;
     gap: number;
 }
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class DashLineShader extends SmoothGraphicsShader
 {
     constructor(dashParams?: IDashParams)

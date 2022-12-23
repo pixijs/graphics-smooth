@@ -1,5 +1,14 @@
 import { ContextSystem } from '@pixi/core';
 
+/**
+ * Original namespace for PIXI
+ * @namespace PIXI
+ */
+
+
+/**
+ * @memberof PIXI
+ */
 interface ContextSystemPatched extends ContextSystem
 {
     antialias: boolean;

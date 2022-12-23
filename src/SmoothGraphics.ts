@@ -57,6 +57,9 @@ export interface ILineStyleOptions extends IFillStyleOptions
     miterLimit?: number;
 }
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class SmoothGraphics extends Container
 {
     public static get nextRoundedRectBehavior(): boolean

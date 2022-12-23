@@ -7,6 +7,9 @@ import { SmoothGraphicsData } from '../core/SmoothGraphicsData';
 import { BuildData } from '../core/BuildData';
 import { JOINT_TYPE } from '../core/const';
 
+/**
+ * @memberof PIXI.smooth
+ */
 export class CircleBuilder implements IShapeBuilder
 {
     path(graphicsData: SmoothGraphicsData, _target: BuildData)
