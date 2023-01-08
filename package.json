@@ -1,17 +1,15 @@
 {
   "name": "@pixi/graphics-smooth",
   "version": "1.0.0",
-  "description": "PixiJS v6 plugin for smooth HHAA rendering of shapes",
+  "description": "PixiJS v7 plugin for smooth HHAA rendering of shapes",
   "author": "Ivan Popelyshev",
   "contributors": [
     "Ivan Popelyshev <ivan.popelyshev@gmail.com>",
     "Matt Karl <matt@mattkarl.com>"
   ],
-  "source": "./src/index.ts",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
   "types": "./lib/index.d.ts",
-  "bundle": "./dist/pixi-graphics-smooth.js",
   "exports": {
     ".": {
       "import": "./lib/index.mjs",
@@ -19,7 +17,15 @@
       "types": "./lib/index.d.ts"
     }
   },
-  "namespace": "PIXI.smooth",
+  "extensionConfig": {
+    "lint": ["src"],
+    "namespace": "PIXI.smooth",
+    "docsName": "PixiJS Smooth Graphics",
+    "docsCopyright": "Copyright &copy; 2015 - 2022 Ivan Popelyshev",
+    "docsTitle": "PixiJS Smooth Graphics API Documentation",
+    "docsDescription": "Documentation for PixiJS Smooth Graphics library",
+    "docsKeywords": "docs, documentation, pixi, pixijs, rendering, graphics, display, antialias, javascript"
+  },
   "homepage": "http://www.pixijs.com/",
   "bugs": "https://github.com/pixijs/graphics-smooth/issues",
   "license": "MIT",
@@ -28,27 +34,17 @@
     "url": "https://github.com/pixijs/graphics-smooth.git"
   },
   "scripts": {
-    "clean": "rimraf dist/* lib/*",
-    "start": "run-p watch examples",
-    "watch": "rollup -cw",
-    "prebuild": "run-s clean lint types",
-    "build": "rollup -c",
-    "postbuild": "run-s build:types",
-    "prebuild:types": "rimraf lib/**.d.ts",
-    "build:types": "tsc --outDir lib --declaration --emitDeclarationOnly",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
-    "types": "tsc -noEmit",
-    "examples": "http-server . -o examples -s",
-    "release:patch": "npm version patch && npm publish",
-    "release:minor": "npm version minor && npm publish",
-    "release:major": "npm version major && npm publish",
-    "postversion": "run-s build",
-    "postpublish": "run-s deploy && git push && git push --tags",
-    "predocs": "rimraf docs/**",
-    "docs": "webdoc -c webdoc.json -r README.md",
-    "predeploy": "run-s docs",
-    "deploy": "gh-pages -d . -s \"{dist,examples,docs}/**\" -f",
+    "clean": "xs clean",
+    "start": "xs serve",
+    "watch": "xs watch",
+    "build": "xs build",
+    "lint": "xs lint",
+    "lint:fix": "xs lint --fix",
+    "types": "xs types",
+    "release": "xs release",
+    "docs": "xs docs",
+    "deploy": "xs deploy",
+    "test": "xs build,docs",
     "prepack": "clean-package",
     "postpack": "clean-package restore"
   },
@@ -66,17 +62,8 @@
       "scripts",
       "engines",
       "devDependencies",
-      "eslintConfig",
-      "source"
+      "extensionConfig"
     ]
-  },
-  "eslintConfig": {
-    "extends": [
-      "@pixi/eslint-config"
-    ],
-    "rules": {
-      "linebreak-style": 0
-    }
   },
   "files": [
     "dist/",
@@ -91,19 +78,8 @@
   "devDependencies": {
     "@pixi/core": "^7.0.0",
     "@pixi/display": "^7.0.0",
-    "@pixi/eslint-config": "^4.0.1",
+    "@pixi/extension-scripts": "^1.2.1",
     "@pixi/graphics": "^7.0.0",
-    "@pixi/webdoc-template": "^1.5.5",
-    "@webdoc/cli": "^2.2.0",
-    "clean-package": "^1.0.1",
-    "cross-env": "^7.0.3",
-    "eslint": "^8.30.0",
-    "gh-pages": "^4.0.0",
-    "http-server": "^14.1.1",
-    "npm-run-all": "^4.1.5",
-    "rimraf": "^3.0.0",
-    "rollup": "^2.50.5",
-    "rollup-plugin-esbuild": "^5.0.0",
-    "typescript": "^4.0.0"
+    "clean-package": "^1.0.1"
   }
 }
