@@ -121,10 +121,9 @@ If style buffer is too big (for now its max 24), one more drawcall will spawn.
 * support Uniform Buffer Objects
 * support batching of multiple graphics elements
 
-## Build & test
+## Build & Test
 
 ```bash
-npm
-npm run build
-http-server -c-1
+npm install
+npm start
 ```
