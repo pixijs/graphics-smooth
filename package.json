@@ -18,7 +18,9 @@
     }
   },
   "extensionConfig": {
-    "lint": ["src"],
+    "lint": [
+      "src"
+    ],
     "namespace": "PIXI.smooth",
     "docsName": "PixiJS Smooth Graphics",
     "docsCopyright": "Copyright &copy; 2015 - 2022 Ivan Popelyshev",
@@ -58,7 +60,6 @@
     "lib/"
   ],
   "peerDependencies": {
-    "@pixi/constants": "^7.0.0",
     "@pixi/core": "^7.0.0",
     "@pixi/display": "^7.0.0",
     "@pixi/graphics": "^7.0.0"
