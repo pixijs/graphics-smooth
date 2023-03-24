@@ -706,8 +706,7 @@ export class SmoothGraphics extends Container
 
         // and then lets set the tint..
         Color.shared.setValue(this._tintColor)
-            .multiply([worldAlpha, worldAlpha, worldAlpha])
-            .setAlpha(worldAlpha)
+            .premultiply(worldAlpha)
             .toArray(uniforms.tint);
 
         uniforms.resolution = renderer.renderTexture.current
