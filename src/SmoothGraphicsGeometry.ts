@@ -636,6 +636,11 @@ export class SmoothGraphicsGeometry extends Geometry
         {
             return false;
         }
+
+        if (styleA.shader !== styleB.shader)
+        {
+            return false;
+        }
         // TODO: propagate width for FillStyle
         if ((styleA as LineStyle).width !== (styleB as LineStyle).width)
         {
