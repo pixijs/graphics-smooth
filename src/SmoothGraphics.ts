@@ -1,5 +1,6 @@
 import {
     Circle,
+    Color,
     Ellipse,
     PI_2,
     Point,
@@ -18,11 +19,11 @@ import {
     MSAA_QUALITY,
 } from '@pixi/core';
 
-import { graphicsUtils, LINE_JOIN, LINE_CAP, Graphics } from '@pixi/graphics';
+import { curves, Graphics, graphicsUtils, LINE_JOIN, LINE_CAP } from '@pixi/graphics';
 import { SmoothGraphicsGeometry } from './SmoothGraphicsGeometry';
 import { Container } from '@pixi/display';
 
-import type { IShape, IPointData } from '@pixi/core';
+import type { ColorSource, IShape, IPointData } from '@pixi/core';
 import type { IDestroyOptions } from '@pixi/display';
 import { IGraphicsBatchSettings } from './core/BatchDrawCall';
 import { FillStyle } from './core/FillStyle';
@@ -33,13 +34,12 @@ import { settings } from './settings';
 const UnsmoothGraphics = Graphics;
 const { BezierUtils, QuadraticUtils, ArcUtils } = graphicsUtils;
 
-const temp = new Float32Array(3);
 // a default shaders map used by graphics..
 const DEFAULT_SHADERS: { [key: string]: Shader } = {};
 
 export interface IFillStyleOptions
 {
-    color?: number;
+    color?: ColorSource;
     alpha?: number;
     texture?: Texture;
     matrix?: Matrix;
@@ -62,6 +62,8 @@ export interface ILineStyleOptions extends IFillStyleOptions
  */
 export class SmoothGraphics extends Container
 {
+    public static readonly curves = curves;
+
     static _TEMP_POINT = new Point();
 
     public shader: Shader;
@@ -79,7 +81,7 @@ export class SmoothGraphics extends Container
     protected _matrix: Matrix;
     protected _holeMode: boolean;
     protected _transformID: number;
-    protected _tint: number;
+    protected _tintColor: Color;
 
     private state: State;
     private _geometry: SmoothGraphicsGeometry;
@@ -129,7 +131,7 @@ export class SmoothGraphics extends Container
         this._transformID = -1;
 
         // Set default
-        this.tint = 0xFFFFFF;
+        this._tintColor = new Color(0xFFFFFF);
         this.blendMode = BLEND_MODES.NORMAL;
     }
 
@@ -150,14 +152,14 @@ export class SmoothGraphics extends Container
         return this.state.blendMode;
     }
 
-    public get tint(): number
+    public get tint(): ColorSource
     {
-        return this._tint;
+        return this._tintColor.value;
     }
 
-    public set tint(value: number)
+    public set tint(value: ColorSource)
     {
-        this._tint = value;
+        this._tintColor.setValue(value);
     }
 
     public get fill(): FillStyle
@@ -170,12 +172,12 @@ export class SmoothGraphics extends Container
         return this._lineStyle;
     }
 
-    public lineStyle(width: number, color?: number, alpha?: number, alignment?: number, scaleMode?: LINE_SCALE_MODE): this;
+    public lineStyle(width: number, color?: ColorSource, alpha?: number, alignment?: number, scaleMode?: LINE_SCALE_MODE): this;
 
     public lineStyle(options?: ILineStyleOptions): this;
 
     public lineStyle(options: ILineStyleOptions | number = null,
-        color = 0x0, alpha = 1, alignment = 0.5, scaleMode = settings.LINE_SCALE_MODE): this
+        color: ColorSource = 0x0, alpha = 1, alignment = 0.5, scaleMode = settings.LINE_SCALE_MODE): this
     {
         // Support non-object params: (width, color, alpha, alignment, native)
         if (typeof options === 'number')
@@ -216,6 +218,8 @@ export class SmoothGraphics extends Container
             shader: null,
             scaleMode: settings.LINE_SCALE_MODE,
         }, options);
+
+        this.normalizeColor(options);
 
         if (this.currentPath)
         {
@@ -426,9 +430,17 @@ export class SmoothGraphics extends Container
         return this;
     }
 
-    public beginFill(color = 0, alpha = 1, smooth = false): this
+    public beginFill(color: ColorSource = 0, alpha = 1, smooth = false): this
     {
         return this.beginTextureFill({ texture: Texture.WHITE, color, alpha, smooth });
+    }
+
+    private normalizeColor(options: Pick<IFillStyleOptions, 'color' | 'alpha'>): void
+    {
+        const temp = Color.shared.setValue(options.color ?? 0);
+
+        options.color = temp.toNumber();
+        options.alpha ??= temp.alpha;
     }
 
     beginTextureFill(options?: IFillStyleOptions): this
@@ -441,6 +453,8 @@ export class SmoothGraphics extends Container
             matrix: null,
             smooth: false,
         }, options) as IFillStyleOptions;
+
+        this.normalizeColor(options);
 
         if (this.currentPath)
         {
@@ -683,7 +697,6 @@ export class SmoothGraphics extends Container
         let shader: Shader = directShader;
 
         const geometry = this._geometry;
-        const tint = this.tint;
         const worldAlpha = this.worldAlpha;
         const uniforms = shader.uniforms;
         const drawCalls = geometry.drawCalls;
@@ -692,10 +705,10 @@ export class SmoothGraphics extends Container
         uniforms.translationMatrix = this.transform.worldTransform;
 
         // and then lets set the tint..
-        uniforms.tint[0] = (((tint >> 16) & 0xFF) / 255) * worldAlpha;
-        uniforms.tint[1] = (((tint >> 8) & 0xFF) / 255) * worldAlpha;
-        uniforms.tint[2] = ((tint & 0xFF) / 255) * worldAlpha;
-        uniforms.tint[3] = worldAlpha;
+        Color.shared.setValue(this._tintColor)
+            .multiply([worldAlpha, worldAlpha, worldAlpha])
+            .setAlpha(worldAlpha)
+            .toArray(uniforms.tint);
 
         uniforms.resolution = renderer.renderTexture.current
             ? renderer.renderTexture.current.resolution : renderer.resolution;
@@ -844,26 +857,16 @@ export class SmoothGraphics extends Container
     {
         if (this.batchTint !== this.tint)
         {
-            this.batchTint = this.tint;
-
-            const tintRGB = utils.hex2rgb(this.tint, temp);
+            this.batchTint = this._tintColor.toNumber();
 
             for (let i = 0; i < this.batches.length; i++)
             {
                 const batch = this.batches[i];
 
-                const batchTint = batch._batchRGB;
-
-                const r = (tintRGB[0] * batchTint[0]) * 255;
-                const g = (tintRGB[1] * batchTint[1]) * 255;
-                const b = (tintRGB[2] * batchTint[2]) * 255;
-
-                // TODO Ivan, can this be done in one go?
-                const color = (r << 16) + (g << 8) + (b | 0);
-
-                batch._tintRGB = (color >> 16)
-                    + (color & 0xff00)
-                    + ((color & 0xff) << 16);
+                batch._tintRGB = Color.shared
+                    .setValue(this._tintColor)
+                    .multiply(batch._batchRGB)
+                    .toLittleEndianNumber();
             }
         }
     }
