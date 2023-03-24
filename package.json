@@ -1,6 +1,6 @@
 {
   "name": "@pixi/graphics-smooth",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PixiJS v7 plugin for smooth HHAA rendering of shapes",
   "author": "Ivan Popelyshev",
   "contributors": [
@@ -18,7 +18,9 @@
     }
   },
   "extensionConfig": {
-    "lint": ["src"],
+    "lint": [
+      "src"
+    ],
     "namespace": "PIXI.smooth",
     "docsName": "PixiJS Smooth Graphics",
     "docsCopyright": "Copyright &copy; 2015 - 2022 Ivan Popelyshev",
