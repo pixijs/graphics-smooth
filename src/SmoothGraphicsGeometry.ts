@@ -4,11 +4,11 @@ import { FILL_COMMANDS } from './shapes';
 
 import {
     Buffer,
+    Color,
     Geometry,
     Texture,
     WRAP_MODES,
     TYPES,
-    utils,
     SHAPES,
     Point,
     Matrix,
@@ -784,9 +784,13 @@ export class SmoothGraphicsGeometry extends Geometry
             index += batchData.size;
 
             const { color, alpha } = style;
-            const rgb = (color >> 16) + (color & 0xff00) + ((color & 0xff) << 16);
+            const bgr = Color.shared
+                .setValue(color)
+                .toLittleEndianNumber();
 
-            batchData.rgba = utils.premultiplyTint(rgb, alpha);
+            batchData.rgba = Color.shared
+                .setValue(bgr)
+                .toPremultiplied(alpha);
             batchData.styleId = styleId;
         }
     }

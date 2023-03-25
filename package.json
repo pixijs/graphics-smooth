@@ -60,15 +60,14 @@
     "lib/"
   ],
   "peerDependencies": {
-    "@pixi/constants": "^7.0.0",
-    "@pixi/core": "^7.0.0",
-    "@pixi/display": "^7.0.0",
-    "@pixi/graphics": "^7.0.0"
+    "@pixi/core": "^7.2.0",
+    "@pixi/display": "^7.2.0",
+    "@pixi/graphics": "^7.2.0"
   },
   "devDependencies": {
-    "@pixi/core": "^7.0.0",
-    "@pixi/display": "^7.0.0",
-    "@pixi/extension-scripts": "^1.4.0",
-    "@pixi/graphics": "^7.0.0"
+    "@pixi/core": "^7.2.0",
+    "@pixi/display": "^7.2.0",
+    "@pixi/extension-scripts": "^1.8.1",
+    "@pixi/graphics": "^7.2.0"
   }
 }
